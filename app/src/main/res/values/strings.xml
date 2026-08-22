@@ -1,0 +1,83 @@
+<resources>
+    <string name="app_name">MDPG26</string>
+    <string name="app_title">MDP Controller</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_terminal">Terminal</string>
+    <string name="nav_control">Control</string>
+    <string name="nav_arena">Arena</string>
+
+    <!-- Connection status strip -->
+    <string name="status_disconnected_title">Not connected</string>
+    <string name="status_disconnected_subtitle">Tap Connect to pair with the RPi or AMDTool</string>
+    <string name="status_connecting_title">Connecting…</string>
+    <string name="status_connecting_subtitle_fmt">Connecting to %1$s</string>
+    <string name="status_connected_title">Connected</string>
+    <string name="status_reconnecting_title_fmt">Reconnecting… (attempt %1$d)</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="cd_more_options">More connection options</string>
+    <string name="cd_bluetooth_icon">Bluetooth status icon</string>
+
+    <!-- Device picker -->
+    <string name="picker_title">Connect to device</string>
+    <string name="cd_scan">Scan for devices</string>
+    <string name="picker_section_paired">Paired devices</string>
+    <string name="picker_section_available">Available devices</string>
+    <string name="picker_scanning">Scanning…</string>
+    <string name="picker_empty_paired">No paired devices yet. Pair with the RPi (e.g. MDPGrp24) in Android Bluetooth settings first.</string>
+    <string name="picker_empty_available">No new devices found nearby. Make sure the RPi is discoverable and try scanning again.</string>
+    <string name="picker_reconnect_last_fmt">Reconnect to %1$s</string>
+    <string name="picker_bt_off_title">Bluetooth is off</string>
+    <string name="picker_bt_off_body">Turn on Bluetooth to scan for and connect to the RPi.</string>
+    <string name="action_turn_on_bluetooth">Turn on Bluetooth</string>
+    <string name="picker_permission_title">Bluetooth permission needed</string>
+    <string name="picker_permission_body">Allow Bluetooth permissions so the app can scan for and connect to nearby devices.</string>
+    <string name="action_grant_permission">Grant permission</string>
+    <string name="label_paired">Paired</string>
+    <string name="unknown_device">Unknown device</string>
+
+    <!-- Terminal -->
+    <string name="terminal_empty_title">No messages yet</string>
+    <string name="terminal_empty_body">Connect to a device, then send a line of text to test the Bluetooth serial link.</string>
+    <string name="terminal_hint">Type a message to send…</string>
+    <string name="cd_send">Send message</string>
+    <string name="terminal_banner_not_connected">Not connected to a Bluetooth device</string>
+
+    <!-- Control tab: movement (C.3) -->
+    <string name="control_banner_not_connected">Not connected — commands won\'t reach the robot</string>
+    <string name="control_section_movement">MOVEMENT</string>
+    <string name="control_section_mission">MISSION</string>
+    <string name="cmd_forward">FORWARD</string>
+    <string name="cmd_reverse">REVERSE</string>
+    <string name="cmd_strafe_left">STRAFE LEFT</string>
+    <string name="cmd_strafe_right">STRAFE RIGHT</string>
+    <string name="cmd_rotate_left">ROTATE LEFT</string>
+    <string name="cmd_rotate_right">ROTATE RIGHT</string>
+    <string name="cmd_begin_explore">Start Exploration</string>
+    <string name="cmd_begin_fastest">Start Fastest Path</string>
+    <string name="cmd_send_arena">Send Arena Info</string>
+    <string name="last_command_none">Last sent: —</string>
+    <string name="last_command_fmt">Last sent: %1$s</string>
+    <string name="confirm_begin_explore_title">Start exploration?</string>
+    <string name="confirm_begin_explore_body">This sends \"beginExplore\" to the robot and starts the exploration run.</string>
+    <string name="confirm_begin_fastest_title">Start fastest path?</string>
+    <string name="confirm_begin_fastest_body">This sends \"beginFastest\" to the robot and starts the fastest-path run.</string>
+    <string name="action_start">Start</string>
+    <string name="action_cancel">Cancel</string>
+
+    <!-- Arena tab (C.5-C.7) -->
+    <string name="arena_banner_not_connected">Not connected — obstacle updates won\'t reach the robot</string>
+    <string name="arena_tool_place">Place</string>
+    <string name="arena_tool_remove">Remove</string>
+    <string name="arena_legend">Tap an empty cell to place • drag an obstacle to move it • tap an obstacle to set its target face • drag it off the grid to delete</string>
+    <string name="cd_arena_view">Exploration arena grid with obstacles and robot position</string>
+    <string name="arena_robot_status_fmt">Robot: (%1$d, %2$d) facing %3$s</string>
+
+    <!-- Errors / toasts -->
+    <string name="error_bluetooth_unsupported">This device does not support Bluetooth</string>
+    <string name="error_bluetooth_off">Bluetooth is turned off</string>
+    <string name="error_connect_failed_fmt">Couldn\'t connect to %1$s</string>
+    <string name="error_permission_denied">Bluetooth permissions were denied</string>
+    <string name="error_send_failed">Message not sent — check the connection</string>
+</resources>

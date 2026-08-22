@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Arena canvas colors (ArenaView) - theme-varying, set in themes.xml / values-night/themes.xml -->
+    <attr name="arenaCellFill" format="color" />
+    <attr name="arenaGridLine" format="color" />
+</resources>

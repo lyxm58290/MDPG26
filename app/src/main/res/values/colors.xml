@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Light theme — Material 3 roles -->
+    <color name="md_light_primary">#2E5CFF</color>
+    <color name="md_light_onPrimary">#FFFFFF</color>
+    <color name="md_light_primaryContainer">#E1E6FF</color>
+    <color name="md_light_onPrimaryContainer">#00105C</color>
+    <color name="md_light_secondary">#00897B</color>
+    <color name="md_light_onSecondary">#FFFFFF</color>
+    <color name="md_light_secondaryContainer">#C7F5EC</color>
+    <color name="md_light_onSecondaryContainer">#00332C</color>
+    <color name="md_light_tertiary">#F5820D</color>
+    <color name="md_light_onTertiary">#FFFFFF</color>
+    <color name="md_light_tertiaryContainer">#FFE3C2</color>
+    <color name="md_light_onTertiaryContainer">#4A2800</color>
+    <color name="md_light_background">#F6F7FC</color>
+    <color name="md_light_onBackground">#1A1B21</color>
+    <color name="md_light_surface">#FFFFFF</color>
+    <color name="md_light_onSurface">#1A1B21</color>
+    <color name="md_light_surfaceVariant">#E3E5F2</color>
+    <color name="md_light_onSurfaceVariant">#45464F</color>
+    <color name="md_light_outline">#767680</color>
+    <color name="md_light_outlineVariant">#C6C6D0</color>
+    <color name="md_light_error">#BA1A1A</color>
+    <color name="md_light_onError">#FFFFFF</color>
+    <color name="md_light_errorContainer">#FFDAD6</color>
+    <color name="md_light_onErrorContainer">#410002</color>
+
+    <!-- Dark theme — Material 3 roles -->
+    <color name="md_dark_primary">#B7C3FF</color>
+    <color name="md_dark_onPrimary">#00227A</color>
+    <color name="md_dark_primaryContainer">#003AA8</color>
+    <color name="md_dark_onPrimaryContainer">#DDE1FF</color>
+    <color name="md_dark_secondary">#6FDBCB</color>
+    <color name="md_dark_onSecondary">#00382F</color>
+    <color name="md_dark_secondaryContainer">#005046</color>
+    <color name="md_dark_onSecondaryContainer">#8CF8E5</color>
+    <color name="md_dark_tertiary">#FFB77C</color>
+    <color name="md_dark_onTertiary">#4A2800</color>
+    <color name="md_dark_tertiaryContainer">#6A3C00</color>
+    <color name="md_dark_onTertiaryContainer">#FFDCB8</color>
+    <color name="md_dark_background">#121319</color>
+    <color name="md_dark_onBackground">#E3E2E9</color>
+    <color name="md_dark_surface">#1B1C22</color>
+    <color name="md_dark_onSurface">#E3E2E9</color>
+    <color name="md_dark_surfaceVariant">#45464F</color>
+    <color name="md_dark_onSurfaceVariant">#C6C6D0</color>
+    <color name="md_dark_outline">#90909A</color>
+    <color name="md_dark_outlineVariant">#45464F</color>
+    <color name="md_dark_error">#FFB4AB</color>
+    <color name="md_dark_onError">#690005</color>
+    <color name="md_dark_errorContainer">#93000A</color>
+    <color name="md_dark_onErrorContainer">#FFDAD6</color>
+
+    <!-- App-specific status colors (connection state indicators) -->
+    <color name="status_connected">#12B76A</color>
+    <color name="status_connecting">#F5820D</color>
+    <color name="status_disconnected">#8E8E99</color>
+    <color name="status_error">#F04438</color>
+
+    <!-- Chat bubble surfaces -->
+    <color name="bubble_sent_light">#2E5CFF</color>
+    <color name="bubble_received_light">#E3E5F2</color>
+    <color name="bubble_sent_dark">#3A5CD1</color>
+    <color name="bubble_received_dark">#2A2C34</color>
+
+    <!-- Arena canvas (ArenaView) -->
+    <color name="arena_cell_fill_light">#DCEBFF</color>
+    <color name="arena_cell_fill_dark">#182338</color>
+    <color name="arena_grid_line_light">#FFFFFF</color>
+    <color name="arena_grid_line_dark">#2E3E58</color>
+    <color name="arena_obstacle_fill">#2B2E38</color>
+    <color name="arena_obstacle_text">#FFFFFF</color>
+    <color name="arena_target_face">#FFC107</color>
+    <color name="arena_robot_fill">#2E5CFF</color>
+    <color name="arena_robot_footprint">#402E5CFF</color>
+    <color name="arena_robot_outline">#FFFFFF</color>
+    <color name="arena_drag_ghost_valid">#12B76A</color>
+    <color name="arena_drag_ghost_invalid">#F04438</color>
+</resources>
