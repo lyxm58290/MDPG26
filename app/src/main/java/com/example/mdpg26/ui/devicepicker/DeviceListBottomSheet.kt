@@ -71,6 +71,9 @@ class DeviceListBottomSheet : BottomSheetDialogFragment() {
         binding.btnGrantPermission.setOnClickListener {
             permissionLauncher.launch(BluetoothPermissions.required())
         }
+        binding.rowListen.setOnClickListener {
+            if (viewModel.isListening.value) viewModel.stopListening() else viewModel.startListening()
+        }
 
         observeState()
         refreshAndMaybeScan()
@@ -97,9 +100,26 @@ class DeviceListBottomSheet : BottomSheetDialogFragment() {
                 launch { viewModel.scannedDevices.collect { renderList() } }
                 launch { viewModel.isScanning.collect { renderList() } }
                 launch { viewModel.lastDevice.collect { renderList() } }
-                launch { viewModel.connectionState.collect { renderList() } }
+                launch { viewModel.isListening.collect { renderListenRow() } }
+                launch {
+                    viewModel.connectionState.collect { state ->
+                        renderList()
+                        // Covers the "AMDTool connects to us" flow: once a listen-mode
+                        // connection lands, close the sheet just like a manual tap would.
+                        if (state is ConnectionUiState.Connected) dismiss()
+                    }
+                }
             }
         }
+    }
+
+    private fun renderListenRow() {
+        if (_binding == null) return
+        val listening = viewModel.isListening.value
+        binding.textListenLabel.text = getString(
+            if (listening) R.string.picker_listen_waiting else R.string.picker_listen_start
+        )
+        binding.progressListen.visibility = if (listening) View.VISIBLE else View.GONE
     }
 
     private fun renderList() {
@@ -112,6 +132,8 @@ class DeviceListBottomSheet : BottomSheetDialogFragment() {
             if (btEnabled && !hasPermission) View.VISIBLE else View.GONE
         val showList = btEnabled && hasPermission
         binding.recyclerDevices.visibility = if (showList) View.VISIBLE else View.GONE
+        binding.listenDivider.visibility = if (showList) View.VISIBLE else View.GONE
+        binding.rowListen.visibility = if (showList) View.VISIBLE else View.GONE
         binding.btnScan.isEnabled = showList
 
         if (!showList) return
@@ -152,6 +174,9 @@ class DeviceListBottomSheet : BottomSheetDialogFragment() {
 
     override fun onDestroyView() {
         viewModel.stopDiscovery()
+        if (viewModel.connectionState.value !is ConnectionUiState.Connected) {
+            viewModel.stopListening()
+        }
         super.onDestroyView()
         _binding = null
     }

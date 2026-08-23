@@ -19,6 +19,7 @@ class BluetoothViewModel(application: Application) : AndroidViewModel(applicatio
     val messages = controller.messages
     val isScanning = controller.isScanning
     val lastDevice = controller.lastDevice
+    val isListening = controller.isListening
     val errors = controller.errors
 
     fun isBluetoothSupported() = controller.isBluetoothSupported()
@@ -27,6 +28,8 @@ class BluetoothViewModel(application: Application) : AndroidViewModel(applicatio
     fun startDiscovery() = controller.startDiscovery()
     fun stopDiscovery() = controller.stopDiscovery()
     fun connect(address: String) = controller.connect(address)
+    fun startListening() = controller.startListening()
+    fun stopListening() = controller.stopListening()
     fun disconnect() = controller.disconnect()
     fun sendMessage(text: String) = controller.sendMessage(text)
     fun clearMessages() = controller.clearMessages()

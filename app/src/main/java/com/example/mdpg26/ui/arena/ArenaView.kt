@@ -15,12 +15,14 @@ import androidx.core.content.ContextCompat
 import com.example.mdpg26.R
 import com.example.mdpg26.arena.ArenaState
 import com.example.mdpg26.arena.Facing
+import com.example.mdpg26.arena.Obstacle
 import com.example.mdpg26.arena.RobotState
 import kotlin.math.abs
 
 /**
  * Renders the 2D exploration arena (checklist C.5) and turns raw touch gestures into semantic
- * callbacks for placing, moving, removing and annotating obstacles (checklist C.6, C.7).
+ * callbacks for placing/moving/removing obstacles, annotating their target face (C.6, C.7), and
+ * placing the robot.
  *
  * This view owns no durable state — it just renders whatever [ArenaState] it's given via
  * [setState] and reports gestures upward; [ArenaFragment] decides whether to accept them via
@@ -32,11 +34,11 @@ class ArenaView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    enum class Tool { NONE, PLACE_OBSTACLE, REMOVE_OBSTACLE }
+    enum class Tool { NONE, PLACE_OBSTACLE, REMOVE_OBSTACLE, PLACE_ROBOT }
 
     var tool: Tool = Tool.NONE
 
-    /** Fired on ACTION_UP over an empty cell while [Tool.PLACE_OBSTACLE] is active. */
+    /** Fired on ACTION_UP over an empty, in-bounds cell while [Tool.PLACE_OBSTACLE] is active. */
     var onObstaclePlaceRequested: ((x: Int, y: Int) -> Unit)? = null
 
     /** Fired on ACTION_UP over an obstacle while [Tool.REMOVE_OBSTACLE] is active. */
@@ -45,13 +47,23 @@ class ArenaView @JvmOverloads constructor(
     /** Fired when a drag that started on an obstacle ends (tool == NONE). */
     var onObstacleMoveRequested: ((id: Int, newX: Int, newY: Int) -> Unit)? = null
 
-    /** Fired on a plain tap (no drag) on an existing obstacle (tool == NONE) — cycles its face. */
+    /** Fired on a plain tap (no drag) on an existing obstacle (tool == NONE) — edit its face. */
     var onObstacleTapRequested: ((id: Int) -> Unit)? = null
+
+    /** Fired on ACTION_UP over a valid cell while [Tool.PLACE_ROBOT] is active. */
+    var onRobotPlaceRequested: ((x: Int, y: Int) -> Unit)? = null
 
     private var arenaState: ArenaState = ArenaState()
     private var cellSizePx = 0f
 
-    private data class DragState(val obstacleId: Int, val currentX: Int, val currentY: Int)
+    private data class DragState(
+        val obstacleId: Int,
+        val size: Int,
+        val offsetX: Int,
+        val offsetY: Int,
+        val currentX: Int,
+        val currentY: Int
+    )
     private var dragState: DragState? = null
 
     private var downGridX = -1
@@ -81,7 +93,7 @@ class ArenaView @JvmOverloads constructor(
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
         color = ContextCompat.getColor(context, R.color.arena_target_face)
-        strokeWidth = dp(4f)
+        strokeWidth = dp(5f)
     }
     private val robotFootprintPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -153,43 +165,43 @@ class ArenaView @JvmOverloads constructor(
         }
     }
 
-    private fun cellRect(gridX: Int, gridY: Int): RectF {
+    private fun footprintRect(gridX: Int, gridY: Int, size: Int): RectF {
         val left = gridX * cellSizePx
         val top = gridY * cellSizePx
+        val span = size * cellSizePx
         val inset = cellSizePx * 0.06f
-        return RectF(left + inset, top + inset, left + cellSizePx - inset, top + cellSizePx - inset)
+        return RectF(left + inset, top + inset, left + span - inset, top + span - inset)
     }
 
-    private fun drawObstacle(canvas: Canvas, obstacle: com.example.mdpg26.arena.Obstacle, alpha: Int) {
-        val rect = cellRect(obstacle.x, obstacle.y)
-        val corner = cellSizePx * 0.12f
+    private fun drawObstacle(canvas: Canvas, obstacle: Obstacle, alpha: Int) {
+        val rect = footprintRect(obstacle.x, obstacle.y, obstacle.size)
+        val corner = cellSizePx * 0.2f
 
         obstaclePaint.alpha = alpha
         canvas.drawRoundRect(rect, corner, corner, obstaclePaint)
 
         obstacleTextPaint.alpha = alpha
-        obstacleTextPaint.textSize = cellSizePx * 0.5f
+        obstacleTextPaint.textSize = cellSizePx * obstacle.size * 0.34f
         val fm = obstacleTextPaint.fontMetrics
         val textY = rect.centerY() - (fm.descent + fm.ascent) / 2f
         canvas.drawText(obstacle.id.toString(), rect.centerX(), textY, obstacleTextPaint)
 
-        obstacle.targetFace?.let { face ->
-            targetFacePaint.alpha = alpha
-            val inset = targetFacePaint.strokeWidth / 2f
-            when (face) {
-                Facing.NORTH -> canvas.drawLine(rect.left, rect.top + inset, rect.right, rect.top + inset, targetFacePaint)
-                Facing.SOUTH -> canvas.drawLine(rect.left, rect.bottom - inset, rect.right, rect.bottom - inset, targetFacePaint)
-                Facing.WEST -> canvas.drawLine(rect.left + inset, rect.top, rect.left + inset, rect.bottom, targetFacePaint)
-                Facing.EAST -> canvas.drawLine(rect.right - inset, rect.top, rect.right - inset, rect.bottom, targetFacePaint)
-            }
+        targetFacePaint.alpha = alpha
+        val inset = targetFacePaint.strokeWidth / 2f
+        when (obstacle.imageFace) {
+            Facing.NORTH -> canvas.drawLine(rect.left, rect.top + inset, rect.right, rect.top + inset, targetFacePaint)
+            Facing.SOUTH -> canvas.drawLine(rect.left, rect.bottom - inset, rect.right, rect.bottom - inset, targetFacePaint)
+            Facing.WEST -> canvas.drawLine(rect.left + inset, rect.top, rect.left + inset, rect.bottom, targetFacePaint)
+            Facing.EAST -> canvas.drawLine(rect.right - inset, rect.top, rect.right - inset, rect.bottom, targetFacePaint)
         }
     }
 
     private fun drawDragGhost(canvas: Canvas, drag: DragState) {
-        val rect = cellRect(drag.currentX, drag.currentY)
-        val corner = cellSizePx * 0.12f
-        val paint = if (arenaState.isInBounds(drag.currentX, drag.currentY)) dragValidPaint else dragInvalidPaint
-        canvas.drawRoundRect(rect, corner, corner, paint)
+        val rect = footprintRect(drag.currentX, drag.currentY, drag.size)
+        val corner = cellSizePx * 0.2f
+        val fits = arenaState.footprintInBounds(drag.currentX, drag.currentY, drag.size) &&
+            !arenaState.overlapsAnyObstacle(drag.currentX, drag.currentY, drag.size, excludeId = drag.obstacleId)
+        canvas.drawRoundRect(rect, corner, corner, if (fits) dragValidPaint else dragInvalidPaint)
     }
 
     private fun drawRobot(canvas: Canvas, robot: RobotState) {
@@ -234,7 +246,14 @@ class ArenaView @JvmOverloads constructor(
                 isDragging = false
                 if (tool == Tool.NONE) {
                     arenaState.obstacleAt(gridX, gridY)?.let { hit ->
-                        dragState = DragState(hit.id, hit.x, hit.y)
+                        dragState = DragState(
+                            obstacleId = hit.id,
+                            size = hit.size,
+                            offsetX = gridX - hit.x,
+                            offsetY = gridY - hit.y,
+                            currentX = hit.x,
+                            currentY = hit.y
+                        )
                     }
                 }
                 parent?.requestDisallowInterceptTouchEvent(true)
@@ -247,8 +266,10 @@ class ArenaView @JvmOverloads constructor(
                     if (abs(dx) > touchSlopPx || abs(dy) > touchSlopPx) isDragging = true
                 }
                 dragState?.let { d ->
-                    if (d.currentX != gridX || d.currentY != gridY) {
-                        dragState = d.copy(currentX = gridX, currentY = gridY)
+                    val newX = gridX - d.offsetX
+                    val newY = gridY - d.offsetY
+                    if (d.currentX != newX || d.currentY != newY) {
+                        dragState = d.copy(currentX = newX, currentY = newY)
                         invalidate()
                     }
                 }
@@ -280,10 +301,13 @@ class ArenaView @JvmOverloads constructor(
                     arenaState.obstacleAt(downGridX, downGridY)?.let { onObstacleRemoveRequested?.invoke(it.id) }
                 }
             }
+            Tool.PLACE_ROBOT -> {
+                if (!isDragging) onRobotPlaceRequested?.invoke(downGridX, downGridY)
+            }
             Tool.NONE -> {
                 if (drag != null) {
                     if (isDragging) {
-                        onObstacleMoveRequested?.invoke(drag.obstacleId, gridX, gridY)
+                        onObstacleMoveRequested?.invoke(drag.obstacleId, drag.currentX, drag.currentY)
                     } else {
                         onObstacleTapRequested?.invoke(drag.obstacleId)
                     }
