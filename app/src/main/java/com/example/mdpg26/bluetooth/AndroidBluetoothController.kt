@@ -33,6 +33,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.json.JSONException
+import org.json.JSONObject
 import java.util.UUID
 import kotlin.math.min
 import kotlin.math.pow
@@ -98,6 +100,9 @@ class AndroidBluetoothController(
 
     private val _isListening = MutableStateFlow(false)
     override val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
+
+    private val _robotStatus = MutableStateFlow<RobotStatus?>(null)
+    override val robotStatus: StateFlow<RobotStatus?> = _robotStatus.asStateFlow()
 
     private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
     override val errors: SharedFlow<String> = _errors
@@ -180,6 +185,7 @@ class AndroidBluetoothController(
     override fun connect(address: String) {
         userInitiatedDisconnect = false
         currentAddress = address
+        _robotStatus.value = null
         stopListening()
         reconnectJob?.cancel()
         readJob?.cancel()
@@ -208,6 +214,7 @@ class AndroidBluetoothController(
         }
 
         userInitiatedDisconnect = false
+        _robotStatus.value = null
         reconnectJob?.cancel()
         readJob?.cancel()
         listenJob?.cancel()
@@ -271,6 +278,7 @@ class AndroidBluetoothController(
         readJob?.cancel()
         closeSocketQuietly()
         _connectionState.value = ConnectionUiState.Disconnected
+        _robotStatus.value = null
         addSystemMessage("Disconnected")
     }
 
@@ -448,25 +456,59 @@ class AndroidBluetoothController(
         succeeded
     }
 
+    /**
+     * Not every peer (AMDTool included) reliably terminates each message with '\n' — a chunk with
+     * no newline in it would otherwise sit in the buffer forever, silently merging into whatever
+     * arrives next. A watchdog coroutine flushes such a leftover as its own message once the link
+     * has been idle for [READ_IDLE_FLUSH_MS], while newline-terminated bursts still split and
+     * surface immediately from the read loop itself. [bufferLock] guards the shared StringBuilder
+     * since the two coroutines can touch it concurrently.
+     */
     private fun startReadLoop(activeSocket: BluetoothSocket) {
+        val bufferLock = Any()
+        val sb = StringBuilder()
+        var lastByteAt = System.currentTimeMillis()
+
+        val watchdogJob = scope.launch {
+            while (isActive) {
+                delay(READ_WATCHDOG_POLL_MS)
+                synchronized(bufferLock) {
+                    if (sb.isNotEmpty() && System.currentTimeMillis() - lastByteAt >= READ_IDLE_FLUSH_MS) {
+                        addReceivedLine(sb.toString().trim())
+                        sb.clear()
+                    }
+                }
+            }
+        }
+
         readJob = scope.launch {
             val buffer = ByteArray(1024)
-            val sb = StringBuilder()
             try {
                 while (isActive) {
                     val bytesRead = activeSocket.inputStream.read(buffer)
                     if (bytesRead < 0) break
-                    sb.append(String(buffer, 0, bytesRead, Charsets.UTF_8))
-                    var newlineIndex = sb.indexOf("\n")
-                    while (newlineIndex >= 0) {
-                        val line = sb.substring(0, newlineIndex).trim()
-                        sb.delete(0, newlineIndex + 1)
-                        if (line.isNotEmpty()) addMessage(line, MessageDirection.RECEIVED)
-                        newlineIndex = sb.indexOf("\n")
+                    synchronized(bufferLock) {
+                        lastByteAt = System.currentTimeMillis()
+                        sb.append(String(buffer, 0, bytesRead, Charsets.UTF_8))
+                        var newlineIndex = sb.indexOf("\n")
+                        while (newlineIndex >= 0) {
+                            val line = sb.substring(0, newlineIndex).trim()
+                            sb.delete(0, newlineIndex + 1)
+                            if (line.isNotEmpty()) addReceivedLine(line)
+                            newlineIndex = sb.indexOf("\n")
+                        }
                     }
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Read loop ended: ${e.message}")
+            } finally {
+                watchdogJob.cancel()
+                synchronized(bufferLock) {
+                    if (sb.isNotEmpty()) {
+                        addReceivedLine(sb.toString().trim())
+                        sb.clear()
+                    }
+                }
             }
             if (isActive) onLinkLost()
         }
@@ -525,6 +567,22 @@ class AndroidBluetoothController(
         addMessage(text, MessageDirection.SYSTEM)
     }
 
+    /** Logs an incoming line to the terminal as usual, and updates [robotStatus] if it's a status JSON line. */
+    private fun addReceivedLine(line: String) {
+        addMessage(line, MessageDirection.RECEIVED)
+        parseStatusUpdate(line)
+    }
+
+    private fun parseStatusUpdate(line: String) {
+        if (!line.startsWith("{")) return
+        val statusValue = try {
+            JSONObject(line).optString("status", "")
+        } catch (e: JSONException) {
+            return
+        }
+        RobotStatus.fromWireValue(statusValue)?.let { _robotStatus.value = it }
+    }
+
     private fun hasConnectPermission() =
         ContextCompat.checkSelfPermission(context, connectPermissionName) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -580,6 +638,10 @@ class AndroidBluetoothController(
         // Generous on purpose: if the device isn't already bonded, connect() blocks on Android's
         // own interactive pairing dialog, which the user needs time to notice and confirm.
         const val CONNECT_TIMEOUT_MS = 15000L
+        // How long the link must sit idle before a newline-less leftover in the read buffer is
+        // flushed as its own message, and how often the watchdog checks for that.
+        const val READ_IDLE_FLUSH_MS = 150L
+        const val READ_WATCHDOG_POLL_MS = 50L
         val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 }

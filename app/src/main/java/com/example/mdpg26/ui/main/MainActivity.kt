@@ -1,5 +1,6 @@
 package com.example.mdpg26.ui.main
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
@@ -16,6 +17,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.mdpg26.R
 import com.example.mdpg26.bluetooth.ConnectionUiState
+import com.example.mdpg26.bluetooth.RobotStatus
 import com.example.mdpg26.databinding.ActivityMainBinding
 import com.example.mdpg26.ui.devicepicker.DeviceListBottomSheet
 import com.example.mdpg26.viewmodel.BluetoothViewModel
@@ -92,6 +94,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.connectionState.collect { renderStatus(it) } }
+                launch { viewModel.robotStatus.collect { renderRobotStatus(it) } }
                 launch {
                     viewModel.errors.collect { message ->
                         Snackbar.make(binding.main, message, Snackbar.LENGTH_SHORT).show()
@@ -152,5 +155,21 @@ class MainActivity : AppCompatActivity() {
         binding.btnConnect.visibility = if (connectVisible) View.VISIBLE else View.GONE
         binding.btnStatusMenu.visibility = if (menuVisible) View.VISIBLE else View.GONE
         binding.statusStrip.isClickable = stripClickable
+    }
+
+    private fun renderRobotStatus(status: RobotStatus?) {
+        val tintColorRes = if (status != null) R.color.status_connected else R.color.status_disconnected
+        binding.robotStatusText.text = status?.label ?: getString(R.string.robot_status_none)
+        binding.robotStatusIcon.setImageResource(status?.iconRes() ?: R.drawable.ic_robot)
+        binding.robotStatusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, tintColorRes))
+    }
+
+    private fun RobotStatus.iconRes(): Int = when (this) {
+        RobotStatus.EXPLORING -> R.drawable.ic_search
+        RobotStatus.FASTEST_PATH -> R.drawable.ic_play_arrow
+        RobotStatus.TURNING_LEFT -> R.drawable.ic_rotate_left
+        RobotStatus.TURNING_RIGHT -> R.drawable.ic_rotate_right
+        RobotStatus.MOVING_FORWARD -> R.drawable.ic_arrow_up
+        RobotStatus.REVERSING -> R.drawable.ic_arrow_down
     }
 }

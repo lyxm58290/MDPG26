@@ -18,6 +18,7 @@
     <string name="action_disconnect">Disconnect</string>
     <string name="cd_more_options">More connection options</string>
     <string name="cd_bluetooth_icon">Bluetooth status icon</string>
+    <string name="robot_status_none">None</string>
 
     <!-- Device picker -->
     <string name="picker_title">Connect to device</string>
