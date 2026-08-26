@@ -15,6 +15,7 @@ interface BluetoothController {
     val messages: StateFlow<List<TerminalMessage>>
     val isScanning: StateFlow<Boolean>
     val lastDevice: StateFlow<BtDevice?>
+    val isListening: StateFlow<Boolean>
     val errors: SharedFlow<String>
 
     fun isBluetoothSupported(): Boolean
@@ -23,6 +24,14 @@ interface BluetoothController {
     fun startDiscovery()
     fun stopDiscovery()
     fun connect(address: String)
+
+    /**
+     * Makes the app itself discoverable as an SPP server and waits for an incoming connection.
+     * Covers AMDTool's "As client" workflow (AMDTool's Bluetooth menu scans for and connects TO
+     * the phone) — the mirror image of [connect], which is the app connecting out to the RPi.
+     */
+    fun startListening()
+    fun stopListening()
     fun disconnect()
     fun sendMessage(text: String)
     fun clearMessages()

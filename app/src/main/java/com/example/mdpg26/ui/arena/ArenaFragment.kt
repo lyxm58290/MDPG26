@@ -11,18 +11,22 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.mdpg26.R
 import com.example.mdpg26.arena.ArenaProtocol
+import com.example.mdpg26.arena.Facing
 import com.example.mdpg26.bluetooth.ConnectionUiState
+import com.example.mdpg26.databinding.DialogTargetFaceBinding
 import com.example.mdpg26.databinding.FragmentArenaBinding
 import com.example.mdpg26.viewmodel.ArenaViewModel
 import com.example.mdpg26.viewmodel.BluetoothViewModel
 import com.example.mdpg26.viewmodel.MoveOutcome
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 /**
  * 2D exploration arena: displays obstacles + robot (C.5), interactive obstacle placement/
- * movement (C.6) and target-face annotation (C.7). [ArenaView] handles rendering/gestures;
- * [ArenaViewModel] owns the canonical state; this fragment is the only place that knows about
- * Bluetooth, translating accepted mutations into [ArenaProtocol] messages.
+ * movement (C.6) and target-face annotation (C.7), plus local robot placement. [ArenaView]
+ * handles rendering/gestures; [ArenaViewModel] owns the canonical state; this fragment is the
+ * only place that knows about Bluetooth, translating accepted mutations into [ArenaProtocol]
+ * messages.
  */
 class ArenaFragment : Fragment() {
 
@@ -49,15 +53,12 @@ class ArenaFragment : Fragment() {
                 !isChecked -> ArenaView.Tool.NONE
                 checkedId == binding.btnToolPlace.id -> ArenaView.Tool.PLACE_OBSTACLE
                 checkedId == binding.btnToolRemove.id -> ArenaView.Tool.REMOVE_OBSTACLE
+                checkedId == binding.btnToolRobot.id -> ArenaView.Tool.PLACE_ROBOT
                 else -> ArenaView.Tool.NONE
             }
         }
 
-        binding.arenaView.onObstaclePlaceRequested = { x, y ->
-            arenaViewModel.addObstacle(x, y)?.let { obstacle ->
-                bluetoothViewModel.sendMessage(ArenaProtocol.obstaclePlaced(obstacle))
-            }
-        }
+        binding.arenaView.onObstaclePlaceRequested = { x, y -> showFacePickerForNewObstacle(x, y) }
         binding.arenaView.onObstacleRemoveRequested = { id ->
             arenaViewModel.removeObstacle(id)?.let { removed ->
                 bluetoothViewModel.sendMessage(ArenaProtocol.obstacleRemoved(removed))
@@ -70,13 +71,55 @@ class ArenaFragment : Fragment() {
                 is MoveOutcome.Rejected -> Unit
             }
         }
-        binding.arenaView.onObstacleTapRequested = { id ->
-            arenaViewModel.cycleTargetFace(id)?.let { updated ->
-                bluetoothViewModel.sendMessage(ArenaProtocol.targetFaceSet(updated))
-            }
-        }
+        binding.arenaView.onObstacleTapRequested = { id -> showFacePickerForExistingObstacle(id) }
+        binding.arenaView.onRobotPlaceRequested = { x, y -> arenaViewModel.moveRobot(x, y) }
+
+        binding.btnRotateRobotLeft.setOnClickListener { arenaViewModel.rotateRobot(clockwise = false) }
+        binding.btnRotateRobotRight.setOnClickListener { arenaViewModel.rotateRobot(clockwise = true) }
 
         observeState()
+    }
+
+    private fun showFacePickerForNewObstacle(x: Int, y: Int) {
+        showFacePickerDialog(
+            subtitle = getString(R.string.dialog_face_subtitle_new_fmt, x, y)
+        ) { face ->
+            arenaViewModel.addObstacle(x, y, face)?.let { obstacle ->
+                bluetoothViewModel.sendMessage(ArenaProtocol.obstaclePlaced(obstacle))
+            }
+        }
+    }
+
+    private fun showFacePickerForExistingObstacle(id: Int) {
+        showFacePickerDialog(
+            subtitle = getString(R.string.dialog_face_subtitle_edit_fmt, id)
+        ) { face ->
+            arenaViewModel.setObstacleFace(id, face)?.let { updated ->
+                bluetoothViewModel.sendMessage(ArenaProtocol.obstaclePlaced(updated))
+            }
+        }
+    }
+
+    private fun showFacePickerDialog(subtitle: String, onChosen: (Facing) -> Unit) {
+        val dialogBinding = DialogTargetFaceBinding.inflate(layoutInflater)
+        dialogBinding.textDialogSubtitle.text = subtitle
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.dialog_face_title)
+            .setView(dialogBinding.root)
+            .setNegativeButton(R.string.action_cancel, null)
+            .create()
+
+        val pick: (Facing) -> Unit = { face ->
+            onChosen(face)
+            dialog.dismiss()
+        }
+        dialogBinding.btnFaceNorth.setOnClickListener { pick(Facing.NORTH) }
+        dialogBinding.btnFaceEast.setOnClickListener { pick(Facing.EAST) }
+        dialogBinding.btnFaceSouth.setOnClickListener { pick(Facing.SOUTH) }
+        dialogBinding.btnFaceWest.setOnClickListener { pick(Facing.WEST) }
+
+        dialog.show()
     }
 
     private fun observeState() {
@@ -106,6 +149,7 @@ class ArenaFragment : Fragment() {
         binding.arenaView.onObstacleRemoveRequested = null
         binding.arenaView.onObstacleMoveRequested = null
         binding.arenaView.onObstacleTapRequested = null
+        binding.arenaView.onRobotPlaceRequested = null
         super.onDestroyView()
         _binding = null
     }

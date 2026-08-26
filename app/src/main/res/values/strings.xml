@@ -36,6 +36,8 @@
     <string name="action_grant_permission">Grant permission</string>
     <string name="label_paired">Paired</string>
     <string name="unknown_device">Unknown device</string>
+    <string name="picker_listen_start">Or wait for AMDTool / RPi to connect to you</string>
+    <string name="picker_listen_waiting">Waiting for an incoming connection… (tap to cancel)</string>
 
     <!-- Terminal -->
     <string name="terminal_empty_title">No messages yet</string>
@@ -68,11 +70,23 @@
 
     <!-- Arena tab (C.5-C.7) -->
     <string name="arena_banner_not_connected">Not connected — obstacle updates won\'t reach the robot</string>
-    <string name="arena_tool_place">Place</string>
+    <string name="arena_tool_place">Obstacle</string>
     <string name="arena_tool_remove">Remove</string>
-    <string name="arena_legend">Tap an empty cell to place • drag an obstacle to move it • tap an obstacle to set its target face • drag it off the grid to delete</string>
+    <string name="arena_tool_robot">Robot</string>
+    <string name="arena_legend">Tap the top-left cell of an empty 4×4 spot to place an obstacle (you\'ll be asked which side faces the target) • drag an obstacle to move it, or off the grid to delete it • tap an obstacle to change its target face • use Robot to set the robot\'s position</string>
     <string name="cd_arena_view">Exploration arena grid with obstacles and robot position</string>
     <string name="arena_robot_status_fmt">Robot: (%1$d, %2$d) facing %3$s</string>
+    <string name="cd_rotate_robot_left">Rotate robot left</string>
+    <string name="cd_rotate_robot_right">Rotate robot right</string>
+
+    <!-- Target face picker dialog -->
+    <string name="dialog_face_title">Target image face</string>
+    <string name="dialog_face_subtitle_new_fmt">Which side of the new obstacle at (%1$d, %2$d) has the target image?</string>
+    <string name="dialog_face_subtitle_edit_fmt">Which side of obstacle #%1$d has the target image?</string>
+    <string name="face_north">North</string>
+    <string name="face_south">South</string>
+    <string name="face_east">East</string>
+    <string name="face_west">West</string>
 
     <!-- Errors / toasts -->
     <string name="error_bluetooth_unsupported">This device does not support Bluetooth</string>
@@ -80,4 +94,5 @@
     <string name="error_connect_failed_fmt">Couldn\'t connect to %1$s</string>
     <string name="error_permission_denied">Bluetooth permissions were denied</string>
     <string name="error_send_failed">Message not sent — check the connection</string>
+    <string name="error_listen_failed">Couldn\'t start listening for a connection</string>
 </resources>

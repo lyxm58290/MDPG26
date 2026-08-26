@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="16dp">
+
+    <TextView
+        android:id="@+id/textDialogSubtitle"
+        style="@style/TextAppearance.Material3.BodyMedium"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Which side of obstacle #3 has the target image?" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnFaceNorth"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="108dp"
+        android:layout_height="52dp"
+        android:ellipsize="end"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:maxLines="1"
+        android:text="@string/face_north"
+        app:cornerRadius="14dp"
+        app:layout_constraintBottom_toTopOf="@id/rowMiddle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textDialogSubtitle" />
+
+    <LinearLayout
+        android:id="@+id/rowMiddle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@id/btnFaceSouth"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnFaceNorth">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFaceWest"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="108dp"
+            android:layout_height="52dp"
+            android:layout_marginEnd="6dp"
+            android:ellipsize="end"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:maxLines="1"
+            android:text="@string/face_west"
+            app:cornerRadius="14dp" />
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:alpha="0.5"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_add_box"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFaceEast"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="108dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="6dp"
+            android:ellipsize="end"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:maxLines="1"
+            android:text="@string/face_east"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnFaceSouth"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="108dp"
+        android:layout_height="52dp"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:maxLines="1"
+        android:text="@string/face_south"
+        app:cornerRadius="14dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rowMiddle" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

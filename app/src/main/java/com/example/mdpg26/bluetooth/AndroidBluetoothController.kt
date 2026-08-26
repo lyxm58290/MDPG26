@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -14,11 +15,14 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import com.example.mdpg26.R
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +32,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.io.IOException
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 import kotlin.math.min
 import kotlin.math.pow
@@ -50,10 +54,27 @@ class AndroidBluetoothController(
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    /**
+     * Last-resort safety net. Real Bluetooth Classic stacks are notoriously inconsistent across
+     * OEMs — e.g. BluetoothSocket.close() is documented to throw IOException but has been
+     * observed throwing other RuntimeExceptions on some vendor stacks, especially when a socket
+     * is closed while a connection/pairing negotiation is still in flight. Every such call is
+     * caught locally where possible; this handler exists so that if one slips through anyway, the
+     * whole app doesn't get killed by an uncaught exception on a background coroutine — it's
+     * logged and surfaced as a normal error instead.
+     */
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(TAG, "Unhandled Bluetooth error", throwable)
+        _errors.tryEmit(throwable.message ?: "Unexpected Bluetooth error")
+        socket = null
+        _connectionState.value = ConnectionUiState.Disconnected
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var socket: BluetoothSocket? = null
+    private var serverSocket: BluetoothServerSocket? = null
     private var readJob: Job? = null
     private var reconnectJob: Job? = null
+    private var listenJob: Job? = null
     private var userInitiatedDisconnect = false
     private var currentAddress: String? = null
 
@@ -74,6 +95,9 @@ class AndroidBluetoothController(
 
     private val _lastDevice = MutableStateFlow<BtDevice?>(loadLastDevice())
     override val lastDevice: StateFlow<BtDevice?> = _lastDevice.asStateFlow()
+
+    private val _isListening = MutableStateFlow(false)
+    override val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
     private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
     override val errors: SharedFlow<String> = _errors
@@ -156,6 +180,7 @@ class AndroidBluetoothController(
     override fun connect(address: String) {
         userInitiatedDisconnect = false
         currentAddress = address
+        stopListening()
         reconnectJob?.cancel()
         readJob?.cancel()
         scope.launch {
@@ -166,8 +191,82 @@ class AndroidBluetoothController(
         }
     }
 
+    @SuppressLint("MissingPermission")
+    override fun startListening() {
+        if (!hasConnectPermission()) {
+            _errors.tryEmit(context.getString(R.string.error_permission_denied))
+            return
+        }
+        val a = adapter
+        if (a == null) {
+            _errors.tryEmit(context.getString(R.string.error_bluetooth_unsupported))
+            return
+        }
+        if (!a.isEnabled) {
+            _errors.tryEmit(context.getString(R.string.error_bluetooth_off))
+            return
+        }
+
+        userInitiatedDisconnect = false
+        reconnectJob?.cancel()
+        readJob?.cancel()
+        listenJob?.cancel()
+
+        listenJob = scope.launch {
+            val ss = try {
+                a.listenUsingRfcommWithServiceRecord(SERVER_NAME, SPP_UUID)
+            } catch (e: Exception) {
+                Log.w(TAG, "listenUsingRfcommWithServiceRecord failed: ${e.message}")
+                _errors.tryEmit(context.getString(R.string.error_listen_failed))
+                return@launch
+            }
+            serverSocket = ss
+            _isListening.value = true
+            addSystemMessage("Waiting for an incoming connection…")
+
+            val incoming = try {
+                ss.accept()
+            } catch (e: Exception) {
+                Log.w(TAG, "accept() ended: ${e.message}")
+                null
+            } finally {
+                _isListening.value = false
+                try {
+                    ss.close()
+                } catch (e: Exception) {
+                    // ignore
+                }
+                serverSocket = null
+            }
+
+            if (incoming == null) return@launch
+
+            val remote = incoming.remoteDevice
+            val name = remote.safeName() ?: remote.address
+            socket = incoming
+            currentAddress = remote.address
+            saveLastDevice(BtDevice(name, remote.address, bonded = true))
+            _connectionState.value = ConnectionUiState.Connected(name, remote.address)
+            addSystemMessage("Connected to $name (incoming)")
+            startReadLoop(incoming)
+        }
+    }
+
+    override fun stopListening() {
+        listenJob?.cancel()
+        listenJob = null
+        try {
+            serverSocket?.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "server socket close() threw: ${e.message}")
+        }
+        serverSocket = null
+        _isListening.value = false
+    }
+
     override fun disconnect() {
         userInitiatedDisconnect = true
+        stopListening()
         reconnectJob?.cancel()
         readJob?.cancel()
         closeSocketQuietly()
@@ -192,7 +291,7 @@ class AndroidBluetoothController(
                 s.outputStream.write((text + "\n").toByteArray(Charsets.UTF_8))
                 s.outputStream.flush()
                 addMessage(text, MessageDirection.SENT)
-            } catch (e: IOException) {
+            } catch (e: Exception) {
                 Log.w(TAG, "Send failed: ${e.message}")
                 _errors.tryEmit(context.getString(R.string.error_send_failed))
                 onLinkLost()
@@ -206,6 +305,7 @@ class AndroidBluetoothController(
 
     override fun release() {
         userInitiatedDisconnect = true
+        stopListening()
         reconnectJob?.cancel()
         readJob?.cancel()
         closeSocketQuietly()
@@ -263,25 +363,35 @@ class AndroidBluetoothController(
             return false
         }
 
-        val newSocket = openSocket(device)
-        if (newSocket == null) {
+        val opened = openSocket(device)
+        if (opened == null) {
             _errors.tryEmit(context.getString(R.string.error_connect_failed_fmt, displayName))
             _connectionState.value = ConnectionUiState.Disconnected
             return false
         }
+        val (newSocket, method) = opened
 
         socket = newSocket
         val name = device.safeName() ?: displayName
         currentAddress = address
         saveLastDevice(BtDevice(name, address, bonded = true))
         _connectionState.value = ConnectionUiState.Connected(name, address)
-        addSystemMessage("Connected to $name")
+        addSystemMessage("Connected to $name (via $method)")
         startReadLoop(newSocket)
         return true
     }
 
+    /**
+     * Tries secure -> insecure -> reflection-channel-1, same order as the RPi connection guide,
+     * but each attempt is bounded by [CONNECT_TIMEOUT_MS]. Plain `BluetoothSocket.connect()` has
+     * no built-in timeout — against a non-Android SPP server (e.g. AMDTool's Windows/.NET stack)
+     * the secure handshake can hang or silently produce a dead socket, which previously meant the
+     * app got stuck before ever trying the fallbacks that would actually work. Racing each attempt
+     * against a timer and force-closing the socket on timeout unblocks the underlying connect()
+     * call so the next method gets a real chance.
+     */
     @SuppressLint("MissingPermission")
-    private fun openSocket(device: BluetoothDevice): BluetoothSocket? {
+    private suspend fun openSocket(device: BluetoothDevice): Pair<BluetoothSocket, String>? {
         val creators: List<Pair<String, () -> BluetoothSocket>> = listOf(
             "secure" to { device.createRfcommSocketToServiceRecord(SPP_UUID) },
             "insecure" to { device.createInsecureRfcommSocketToServiceRecord(SPP_UUID) },
@@ -294,18 +404,48 @@ class AndroidBluetoothController(
             var candidate: BluetoothSocket? = null
             try {
                 candidate = create()
-                candidate.connect()
-                return candidate
             } catch (e: Exception) {
-                Log.w(TAG, "Connect attempt via $label failed: ${e.message}")
-                try {
-                    candidate?.close()
-                } catch (closeError: IOException) {
-                    // ignore
-                }
+                Log.w(TAG, "Socket creation via $label failed: ${e.message}")
+                continue
+            }
+            if (connectWithTimeout(candidate, label)) {
+                return candidate to label
             }
         }
         return null
+    }
+
+    /**
+     * Runs the blocking [BluetoothSocket.connect] on an IO thread and races it against
+     * [CONNECT_TIMEOUT_MS]. If the timer wins, the socket is closed to force the still-blocked
+     * connect() call to throw and unwind, rather than leaving it hanging forever.
+     */
+    private suspend fun connectWithTimeout(socket: BluetoothSocket, label: String): Boolean = coroutineScope {
+        val connectJob = async(Dispatchers.IO) { socket.connect() }
+        val succeeded = try {
+            withTimeoutOrNull(CONNECT_TIMEOUT_MS) {
+                connectJob.await()
+                true
+            } ?: run {
+                Log.w(TAG, "Connect attempt via $label timed out after ${CONNECT_TIMEOUT_MS}ms")
+                false
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Connect attempt via $label failed: ${e.message}")
+            false
+        }
+        if (!succeeded) {
+            connectJob.cancel()
+            try {
+                socket.close()
+            } catch (e: Exception) {
+                // Some OEM Bluetooth stacks throw non-IOException types here, especially when
+                // closing mid-pairing; either way this is just what unblocks a still-pending
+                // connect() after a timeout, so there's nothing more to do with it.
+                Log.w(TAG, "close() after failed $label attempt threw: ${e.message}")
+            }
+        }
+        succeeded
     }
 
     private fun startReadLoop(activeSocket: BluetoothSocket) {
@@ -325,7 +465,7 @@ class AndroidBluetoothController(
                         newlineIndex = sb.indexOf("\n")
                     }
                 }
-            } catch (e: IOException) {
+            } catch (e: Exception) {
                 Log.w(TAG, "Read loop ended: ${e.message}")
             }
             if (isActive) onLinkLost()
@@ -371,8 +511,8 @@ class AndroidBluetoothController(
     private fun closeSocketQuietly() {
         try {
             socket?.close()
-        } catch (e: IOException) {
-            // ignore
+        } catch (e: Exception) {
+            Log.w(TAG, "close() threw: ${e.message}")
         }
         socket = null
     }
@@ -436,6 +576,10 @@ class AndroidBluetoothController(
         const val PREFS_NAME = "bluetooth_prefs"
         const val KEY_LAST_ADDRESS = "last_device_address"
         const val KEY_LAST_NAME = "last_device_name"
+        const val SERVER_NAME = "MDPG26"
+        // Generous on purpose: if the device isn't already bonded, connect() blocks on Android's
+        // own interactive pairing dialog, which the user needs time to notice and confirm.
+        const val CONNECT_TIMEOUT_MS = 15000L
         val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 }
