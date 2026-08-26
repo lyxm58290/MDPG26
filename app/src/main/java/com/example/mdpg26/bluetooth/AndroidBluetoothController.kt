@@ -288,7 +288,7 @@ class AndroidBluetoothController(
                 return@launch
             }
             try {
-                s.outputStream.write((text + "\n").toByteArray(Charsets.UTF_8))
+                s.outputStream.write((text).toByteArray(Charsets.UTF_8))
                 s.outputStream.flush()
                 addMessage(text, MessageDirection.SENT)
             } catch (e: Exception) {
