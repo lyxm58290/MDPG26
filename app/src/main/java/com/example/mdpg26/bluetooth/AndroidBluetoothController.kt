@@ -254,6 +254,7 @@ class AndroidBluetoothController(
             currentAddress = remote.address
             saveLastDevice(BtDevice(name, remote.address, bonded = true))
             _connectionState.value = ConnectionUiState.Connected(name, remote.address)
+            BluetoothForegroundService.start(context, name)
             addSystemMessage("Connected to $name (incoming)")
             startReadLoop(incoming)
         }
@@ -277,6 +278,7 @@ class AndroidBluetoothController(
         reconnectJob?.cancel()
         readJob?.cancel()
         closeSocketQuietly()
+        BluetoothForegroundService.stop(context)
         _connectionState.value = ConnectionUiState.Disconnected
         _robotStatus.value = null
         addSystemMessage("Disconnected")
@@ -317,6 +319,7 @@ class AndroidBluetoothController(
         reconnectJob?.cancel()
         readJob?.cancel()
         closeSocketQuietly()
+        BluetoothForegroundService.stop(context)
         if (receiverRegistered) {
             try {
                 context.unregisterReceiver(discoveryReceiver)
@@ -384,6 +387,7 @@ class AndroidBluetoothController(
         currentAddress = address
         saveLastDevice(BtDevice(name, address, bonded = true))
         _connectionState.value = ConnectionUiState.Connected(name, address)
+        BluetoothForegroundService.start(context, name)
         addSystemMessage("Connected to $name (via $method)")
         startReadLoop(newSocket)
         return true

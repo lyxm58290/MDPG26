@@ -11,10 +11,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.mdpg26.R
+import com.example.mdpg26.arena.ArenaProtocol
 import com.example.mdpg26.bluetooth.ConnectionUiState
 import com.example.mdpg26.bluetooth.MessageDirection
 import com.example.mdpg26.bluetooth.RobotCommands
 import com.example.mdpg26.databinding.FragmentControlBinding
+import com.example.mdpg26.viewmodel.ArenaViewModel
 import com.example.mdpg26.viewmodel.BluetoothViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -30,6 +32,7 @@ class ControlFragment : Fragment() {
     private var _binding: FragmentControlBinding? = null
     private val binding get() = _binding!!
     private val viewModel: BluetoothViewModel by activityViewModels()
+    private val arenaViewModel: ArenaViewModel by activityViewModels()
 
     private val movementButtons: List<MaterialButton> by lazy {
         listOf(
@@ -90,7 +93,8 @@ class ControlFragment : Fragment() {
             )
         }
         binding.btnSendArena.setOnClickListener {
-            sendCommand(RobotCommands.SEND_ARENA, getString(R.string.cmd_send_arena))
+            view?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel.sendMessage(ArenaProtocol.arenaSnapshot(arenaViewModel.state.value))
         }
 
         observeState()

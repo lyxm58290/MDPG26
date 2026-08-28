@@ -17,5 +17,4 @@ object RobotCommands {
 
     const val BEGIN_EXPLORE = "beginExplore"
     const val BEGIN_FASTEST = "beginFastest"
-    const val SEND_ARENA = "sendArena"
 }

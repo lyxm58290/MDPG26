@@ -20,6 +20,13 @@
     <string name="cd_bluetooth_icon">Bluetooth status icon</string>
     <string name="robot_status_none">None</string>
 
+    <!-- Bluetooth foreground service notification -->
+    <string name="bt_service_channel_name">Bluetooth link</string>
+    <string name="bt_service_channel_description">Shown while connected to the RPi or AMDTool so the connection survives being backgrounded</string>
+    <string name="bt_service_notification_title">MDP Controller</string>
+    <string name="bt_service_notification_text_fmt">Connected to %1$s</string>
+    <string name="bt_service_notification_text_generic">Bluetooth link active</string>
+
     <!-- Device picker -->
     <string name="picker_title">Connect to device</string>
     <string name="cd_scan">Scan for devices</string>
