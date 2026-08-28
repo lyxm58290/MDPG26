@@ -48,12 +48,15 @@ class ArenaFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.toolToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            binding.arenaView.tool = when {
-                !isChecked -> ArenaView.Tool.NONE
-                checkedId == binding.btnToolPlace.id -> ArenaView.Tool.PLACE_OBSTACLE
-                checkedId == binding.btnToolRemove.id -> ArenaView.Tool.REMOVE_OBSTACLE
-                checkedId == binding.btnToolRobot.id -> ArenaView.Tool.PLACE_ROBOT
+        // Read the group's own checkedButtonId rather than reacting to each button's individual
+        // checked/unchecked event: MaterialButtonToggleGroup fires those per-child in layout order
+        // on every switch, so trusting a single event's isChecked/checkedId can catch a stale
+        // uncheck from the previously-selected button firing after the new one's check event.
+        binding.toolToggleGroup.addOnButtonCheckedListener { group, _, _ ->
+            binding.arenaView.tool = when (group.checkedButtonId) {
+                binding.btnToolPlace.id -> ArenaView.Tool.PLACE_OBSTACLE
+                binding.btnToolRemove.id -> ArenaView.Tool.REMOVE_OBSTACLE
+                binding.btnToolRobot.id -> ArenaView.Tool.PLACE_ROBOT
                 else -> ArenaView.Tool.NONE
             }
         }
