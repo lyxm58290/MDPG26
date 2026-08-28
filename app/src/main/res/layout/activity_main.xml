@@ -83,6 +83,34 @@
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/robotStatusChip"
+            android:layout_width="wrap_content"
+            android:layout_height="26dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_pill_outline"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp">
+
+            <ImageView
+                android:id="@+id/robotStatusIcon"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_robot"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/robotStatusText"
+                style="@style/TextAppearance.Material3.LabelMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="None" />
+        </LinearLayout>
+
         <ProgressBar
             android:id="@+id/statusProgress"
             android:layout_width="20dp"

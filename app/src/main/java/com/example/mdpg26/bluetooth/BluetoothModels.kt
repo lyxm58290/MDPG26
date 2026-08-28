@@ -17,6 +17,23 @@ data class BtDevice(
 
 enum class MessageDirection { SENT, RECEIVED, SYSTEM }
 
+/**
+ * Robot activity status pushed by the RPi as a `{"status":"..."}` JSON line over the serial link
+ * (distinct from the plain-text [RobotCommands] the app sends out).
+ */
+enum class RobotStatus(val wireValue: String, val label: String) {
+    EXPLORING("exploring", "Exploring"),
+    FASTEST_PATH("fastest path", "Fastest Path"),
+    TURNING_LEFT("turning left", "Turning Left"),
+    TURNING_RIGHT("turning right", "Turning Right"),
+    MOVING_FORWARD("moving forward", "Moving Forward"),
+    REVERSING("reversing", "Reversing");
+
+    companion object {
+        fun fromWireValue(value: String): RobotStatus? = entries.firstOrNull { it.wireValue == value }
+    }
+}
+
 data class TerminalMessage(
     val text: String,
     val direction: MessageDirection,

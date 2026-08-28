@@ -20,6 +20,7 @@ class BluetoothViewModel(application: Application) : AndroidViewModel(applicatio
     val isScanning = controller.isScanning
     val lastDevice = controller.lastDevice
     val isListening = controller.isListening
+    val robotStatus = controller.robotStatus
     val errors = controller.errors
 
     fun isBluetoothSupported() = controller.isBluetoothSupported()

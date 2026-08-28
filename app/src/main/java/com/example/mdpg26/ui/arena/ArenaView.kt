@@ -244,17 +244,15 @@ class ArenaView @JvmOverloads constructor(
                 downGridX = gridX
                 downGridY = gridY
                 isDragging = false
-                if (tool == Tool.NONE) {
-                    arenaState.obstacleAt(gridX, gridY)?.let { hit ->
-                        dragState = DragState(
-                            obstacleId = hit.id,
-                            size = hit.size,
-                            offsetX = gridX - hit.x,
-                            offsetY = gridY - hit.y,
-                            currentX = hit.x,
-                            currentY = hit.y
-                        )
-                    }
+                arenaState.obstacleAt(gridX, gridY)?.let { hit ->
+                    dragState = DragState(
+                        obstacleId = hit.id,
+                        size = hit.size,
+                        offsetX = gridX - hit.x,
+                        offsetY = gridY - hit.y,
+                        currentX = hit.x,
+                        currentY = hit.y
+                    )
                 }
                 parent?.requestDisallowInterceptTouchEvent(true)
                 return true
@@ -292,26 +290,30 @@ class ArenaView @JvmOverloads constructor(
 
     private fun handleUp(gridX: Int, gridY: Int) {
         val drag = dragState
-        when (tool) {
-            Tool.PLACE_OBSTACLE -> {
-                if (!isDragging) onObstaclePlaceRequested?.invoke(downGridX, downGridY)
+        // A drag that started on an obstacle always moves it, regardless of which tool button is
+        // selected — otherwise dragging silently does nothing unless the user has deselected every
+        // tool first, which isn't discoverable from the UI.
+        if (isDragging) {
+            if (drag != null) onObstacleMoveRequested?.invoke(drag.obstacleId, drag.currentX, drag.currentY)
+            performClick()
+            return
+        }
+        // Plain tap (no drag). A tap landing on an existing obstacle always targets that obstacle
+        // — Remove tool deletes it, everything else edits its target face — regardless of which
+        // tool is selected; otherwise e.g. tapping an obstacle with Place tool active would try to
+        // place a new one on top of it and silently fail the overlap check. Only taps on empty
+        // cells stay tool-specific.
+        if (drag != null) {
+            if (tool == Tool.REMOVE_OBSTACLE) {
+                onObstacleRemoveRequested?.invoke(drag.obstacleId)
+            } else {
+                onObstacleTapRequested?.invoke(drag.obstacleId)
             }
-            Tool.REMOVE_OBSTACLE -> {
-                if (!isDragging) {
-                    arenaState.obstacleAt(downGridX, downGridY)?.let { onObstacleRemoveRequested?.invoke(it.id) }
-                }
-            }
-            Tool.PLACE_ROBOT -> {
-                if (!isDragging) onRobotPlaceRequested?.invoke(downGridX, downGridY)
-            }
-            Tool.NONE -> {
-                if (drag != null) {
-                    if (isDragging) {
-                        onObstacleMoveRequested?.invoke(drag.obstacleId, drag.currentX, drag.currentY)
-                    } else {
-                        onObstacleTapRequested?.invoke(drag.obstacleId)
-                    }
-                }
+        } else {
+            when (tool) {
+                Tool.PLACE_OBSTACLE -> onObstaclePlaceRequested?.invoke(downGridX, downGridY)
+                Tool.PLACE_ROBOT -> onRobotPlaceRequested?.invoke(downGridX, downGridY)
+                Tool.REMOVE_OBSTACLE, Tool.NONE -> Unit
             }
         }
         performClick()
