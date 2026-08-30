@@ -143,6 +143,11 @@ class ArenaFragment : Fragment() {
                         binding.bannerNotConnected.visibility = if (connected) View.GONE else View.VISIBLE
                     }
                 }
+                launch {
+                    bluetoothViewModel.targetDetections.collect { detection ->
+                        arenaViewModel.setObstacleTarget(detection.obstacleId, detection.targetId)
+                    }
+                }
             }
         }
     }

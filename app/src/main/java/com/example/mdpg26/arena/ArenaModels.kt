@@ -19,13 +19,17 @@ enum class Facing(val letter: String, val degrees: Float) {
  * TOP-LEFT grid cell of that footprint, origin at the arena's top-left, x increasing right, y
  * increasing down (matching AMDTool's own coordinate convention — see scripts/defaultJson.cs).
  * [imageFace] is required at placement time (asked via a dialog) rather than defaulting to unset.
+ * [id] is assigned once at placement and never changes (it's how later `TARGET,<id>,...` messages
+ * address this obstacle — see checklist C.9); [targetId] is the RPi's recognized target-image
+ * result, null until a `TARGET` message names this obstacle, and is what gets displayed once set.
  */
 data class Obstacle(
     val id: Int,
     val x: Int,
     val y: Int,
     val imageFace: Facing,
-    val size: Int = OBSTACLE_SIZE_GRIDS
+    val size: Int = OBSTACLE_SIZE_GRIDS,
+    val targetId: String? = null
 ) {
     val cells: IntRange get() = x until x + size
     val rows: IntRange get() = y until y + size

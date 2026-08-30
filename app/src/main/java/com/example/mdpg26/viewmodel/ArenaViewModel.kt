@@ -81,6 +81,18 @@ class ArenaViewModel : ViewModel() {
         return updated
     }
 
+    /**
+     * Records the RPi's recognized target-image result for obstacle [id] (checklist C.9), from an
+     * incoming `TARGET,<id>,<targetId>` message. No-op if [id] no longer names a placed obstacle
+     * (e.g. it was removed before the RPi's result arrived).
+     */
+    fun setObstacleTarget(id: Int, targetId: String): Obstacle? {
+        val existing = _state.value.obstacles.firstOrNull { it.id == id } ?: return null
+        val updated = existing.copy(targetId = targetId)
+        _state.update { st -> st.copy(obstacles = st.obstacles.map { if (it.id == id) updated else it }) }
+        return updated
+    }
+
     /** Repositions the robot's center cell. Local UI setup only — no ROBOT,... message exists
      *  for the app to send; that format is reserved for incoming RPi position updates (C.10). */
     fun moveRobot(x: Int, y: Int) {

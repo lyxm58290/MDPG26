@@ -180,11 +180,13 @@ class ArenaView @JvmOverloads constructor(
         obstaclePaint.alpha = alpha
         canvas.drawRoundRect(rect, corner, corner, obstaclePaint)
 
+        val displayText = obstacle.targetId ?: obstacle.id.toString()
+        val textScale = if (obstacle.targetId != null) TARGET_TEXT_SCALE else OBSTACLE_ID_TEXT_SCALE
         obstacleTextPaint.alpha = alpha
-        obstacleTextPaint.textSize = cellSizePx * obstacle.size * 0.34f
+        obstacleTextPaint.textSize = cellSizePx * obstacle.size * textScale
         val fm = obstacleTextPaint.fontMetrics
         val textY = rect.centerY() - (fm.descent + fm.ascent) / 2f
-        canvas.drawText(obstacle.id.toString(), rect.centerX(), textY, obstacleTextPaint)
+        canvas.drawText(displayText, rect.centerX(), textY, obstacleTextPaint)
 
         targetFacePaint.alpha = alpha
         val inset = targetFacePaint.strokeWidth / 2f
@@ -324,6 +326,13 @@ class ArenaView @JvmOverloads constructor(
     }
 
     private fun dp(value: Float): Float = value * resources.displayMetrics.density
+
+    private companion object {
+        // Obstacle id (placeholder, pre-detection) is kept small and unobtrusive; the RPi's
+        // recognized target result (checklist C.9) is the meaningful value, so it's shown larger.
+        const val OBSTACLE_ID_TEXT_SCALE = 0.22f
+        const val TARGET_TEXT_SCALE = 0.42f
+    }
 }
 
 private fun Context.themeColor(@AttrRes attrRes: Int): Int {

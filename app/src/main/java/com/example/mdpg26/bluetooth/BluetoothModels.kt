@@ -34,6 +34,25 @@ enum class RobotStatus(val wireValue: String, val label: String) {
     }
 }
 
+/**
+ * RPi image-recognition result for a placed obstacle (checklist C.9), parsed from a
+ * `TARGET,<obstacleId>,<targetId>` line — [obstacleId] is the obstacle's own placement id (as
+ * used in [com.example.mdpg26.arena.ArenaProtocol]'s `OBSTACLE,...` messages, not whatever is
+ * currently displayed on it), and [targetId] is the recognized digit/letter to show instead.
+ */
+data class TargetDetection(val obstacleId: Int, val targetId: String) {
+    companion object {
+        fun parse(line: String): TargetDetection? {
+            val parts = line.split(",").map { it.trim() }
+            if (parts.size != 3 || parts[0] != "TARGET") return null
+            val obstacleId = parts[1].toIntOrNull() ?: return null
+            val targetId = parts[2]
+            if (targetId.isEmpty()) return null
+            return TargetDetection(obstacleId, targetId)
+        }
+    }
+}
+
 data class TerminalMessage(
     val text: String,
     val direction: MessageDirection,

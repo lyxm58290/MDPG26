@@ -104,6 +104,11 @@ class AndroidBluetoothController(
     private val _robotStatus = MutableStateFlow<RobotStatus?>(null)
     override val robotStatus: StateFlow<RobotStatus?> = _robotStatus.asStateFlow()
 
+    // Buffered rather than conflated (unlike robotStatus): each detection names a different
+    // obstacle, so a burst of them must all reach the arena screen, not just the latest.
+    private val _targetDetections = MutableSharedFlow<TargetDetection>(extraBufferCapacity = 32)
+    override val targetDetections: SharedFlow<TargetDetection> = _targetDetections
+
     private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
     override val errors: SharedFlow<String> = _errors
 
@@ -571,10 +576,14 @@ class AndroidBluetoothController(
         addMessage(text, MessageDirection.SYSTEM)
     }
 
-    /** Logs an incoming line to the terminal as usual, and updates [robotStatus] if it's a status JSON line. */
+    /**
+     * Logs an incoming line to the terminal as usual, updates [robotStatus] if it's a status JSON
+     * line, and emits a [TargetDetection] if it's a `TARGET,...` line (checklist C.9).
+     */
     private fun addReceivedLine(line: String) {
         addMessage(line, MessageDirection.RECEIVED)
         parseStatusUpdate(line)
+        TargetDetection.parse(line)?.let { _targetDetections.tryEmit(it) }
     }
 
     private fun parseStatusUpdate(line: String) {
