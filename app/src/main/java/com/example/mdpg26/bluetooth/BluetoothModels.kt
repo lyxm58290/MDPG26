@@ -1,5 +1,7 @@
 package com.example.mdpg26.bluetooth
 
+import com.example.mdpg26.arena.Facing
+
 /** UI-facing connection state for the Bluetooth Classic SPP link to the RPi / AMDTool. */
 sealed class ConnectionUiState {
     data object Disconnected : ConnectionUiState()
@@ -49,6 +51,24 @@ data class TargetDetection(val obstacleId: Int, val targetId: String) {
             val targetId = parts[2]
             if (targetId.isEmpty()) return null
             return TargetDetection(obstacleId, targetId)
+        }
+    }
+}
+
+/**
+ * RPi-reported robot position/heading update (checklist C.10), parsed from a
+ * `ROBOT,<x>,<y>,<direction>` line — <x>/<y> are grid coordinates and <direction> is one of
+ * N/E/S/W (see [Facing.letter]).
+ */
+data class RobotPositionUpdate(val x: Int, val y: Int, val facing: Facing) {
+    companion object {
+        fun parse(line: String): RobotPositionUpdate? {
+            val parts = line.split(",").map { it.trim() }
+            if (parts.size != 4 || parts[0] != "ROBOT") return null
+            val x = parts[1].toIntOrNull() ?: return null
+            val y = parts[2].toIntOrNull() ?: return null
+            val facing = Facing.fromLetter(parts[3]) ?: return null
+            return RobotPositionUpdate(x, y, facing)
         }
     }
 }

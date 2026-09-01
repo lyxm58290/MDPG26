@@ -12,6 +12,10 @@ enum class Facing(val letter: String, val degrees: Float) {
     WEST("W", 270f);
 
     fun next(): Facing = entries[(ordinal + 1) % entries.size]
+
+    companion object {
+        fun fromLetter(letter: String): Facing? = entries.firstOrNull { it.letter == letter }
+    }
 }
 
 /**

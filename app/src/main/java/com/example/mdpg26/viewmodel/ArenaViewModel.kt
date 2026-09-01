@@ -97,10 +97,7 @@ class ArenaViewModel : ViewModel() {
      *  for the app to send; that format is reserved for incoming RPi position updates (C.10). */
     fun moveRobot(x: Int, y: Int) {
         val current = _state.value
-        val half = current.robot.sizeInGrids / 2
-        val inBounds = x - half >= 0 && x + half <= current.width - 1 &&
-            y - half >= 0 && y + half <= current.height - 1
-        if (!inBounds) return
+        if (!robotInBounds(current, x, y)) return
         _state.update { st -> st.copy(robot = st.robot.copy(x = x, y = y)) }
     }
 
@@ -110,5 +107,22 @@ class ArenaViewModel : ViewModel() {
             val next = if (clockwise) current.next() else current.next().next().next()
             st.copy(robot = st.robot.copy(facing = next))
         }
+    }
+
+    /**
+     * Applies the RPi's reported robot position and heading, from an incoming
+     * `ROBOT,<x>,<y>,<direction>` message (checklist C.10). Ignored if (x, y) would put the
+     * robot's footprint out of bounds.
+     */
+    fun updateRobotPosition(x: Int, y: Int, facing: Facing) {
+        val current = _state.value
+        if (!robotInBounds(current, x, y)) return
+        _state.update { st -> st.copy(robot = st.robot.copy(x = x, y = y, facing = facing)) }
+    }
+
+    private fun robotInBounds(state: ArenaState, x: Int, y: Int): Boolean {
+        val half = state.robot.sizeInGrids / 2
+        return x - half >= 0 && x + half <= state.width - 1 &&
+            y - half >= 0 && y + half <= state.height - 1
     }
 }

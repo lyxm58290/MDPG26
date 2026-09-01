@@ -148,6 +148,11 @@ class ArenaFragment : Fragment() {
                         arenaViewModel.setObstacleTarget(detection.obstacleId, detection.targetId)
                     }
                 }
+                launch {
+                    bluetoothViewModel.robotPositionUpdates.collect { update ->
+                        arenaViewModel.updateRobotPosition(update.x, update.y, update.facing)
+                    }
+                }
             }
         }
     }

@@ -18,6 +18,7 @@ interface BluetoothController {
     val isListening: StateFlow<Boolean>
     val robotStatus: StateFlow<RobotStatus?>
     val targetDetections: SharedFlow<TargetDetection>
+    val robotPositionUpdates: SharedFlow<RobotPositionUpdate>
     val errors: SharedFlow<String>
 
     fun isBluetoothSupported(): Boolean
