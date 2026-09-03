@@ -1,0 +1,10 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="28dp"
+        android:centerX="0.35"
+        android:centerY="0.32"
+        android:startColor="@color/joystick_cap_highlight"
+        android:endColor="@color/joystick_cap" />
+</shape>

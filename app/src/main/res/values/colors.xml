@@ -3,81 +3,100 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Light theme — Material 3 roles -->
-    <color name="md_light_primary">#2E5CFF</color>
+    <!-- Light theme — Material 3 roles. Nintendo Switch-inspired: Joy-Con neon red primary,
+         Joy-Con neon blue secondary, a gold accent standing in for the third Joy-Con colorway,
+         on a clean white/light-gray "dock" background. -->
+    <color name="md_light_primary">#FF3C28</color>
     <color name="md_light_onPrimary">#FFFFFF</color>
-    <color name="md_light_primaryContainer">#E1E6FF</color>
-    <color name="md_light_onPrimaryContainer">#00105C</color>
-    <color name="md_light_secondary">#00897B</color>
-    <color name="md_light_onSecondary">#FFFFFF</color>
-    <color name="md_light_secondaryContainer">#C7F5EC</color>
-    <color name="md_light_onSecondaryContainer">#00332C</color>
-    <color name="md_light_tertiary">#F5820D</color>
-    <color name="md_light_onTertiary">#FFFFFF</color>
-    <color name="md_light_tertiaryContainer">#FFE3C2</color>
-    <color name="md_light_onTertiaryContainer">#4A2800</color>
-    <color name="md_light_background">#F6F7FC</color>
-    <color name="md_light_onBackground">#1A1B21</color>
+    <color name="md_light_primaryContainer">#FFDAD4</color>
+    <color name="md_light_onPrimaryContainer">#410002</color>
+    <color name="md_light_secondary">#0AB9E6</color>
+    <color name="md_light_onSecondary">#00363F</color>
+    <color name="md_light_secondaryContainer">#B8EAFF</color>
+    <color name="md_light_onSecondaryContainer">#001F26</color>
+    <color name="md_light_tertiary">#F5C400</color>
+    <color name="md_light_onTertiary">#3A2E00</color>
+    <color name="md_light_tertiaryContainer">#FFF0AD</color>
+    <color name="md_light_onTertiaryContainer">#241A00</color>
+    <color name="md_light_background">#F4F4F7</color>
+    <color name="md_light_onBackground">#1B1B1F</color>
     <color name="md_light_surface">#FFFFFF</color>
-    <color name="md_light_onSurface">#1A1B21</color>
-    <color name="md_light_surfaceVariant">#E3E5F2</color>
-    <color name="md_light_onSurfaceVariant">#45464F</color>
-    <color name="md_light_outline">#767680</color>
-    <color name="md_light_outlineVariant">#C6C6D0</color>
+    <color name="md_light_onSurface">#1B1B1F</color>
+    <color name="md_light_surfaceVariant">#E4E2E6</color>
+    <color name="md_light_onSurfaceVariant">#46464A</color>
+    <color name="md_light_outline">#77767A</color>
+    <color name="md_light_outlineVariant">#C7C5C9</color>
     <color name="md_light_error">#BA1A1A</color>
     <color name="md_light_onError">#FFFFFF</color>
     <color name="md_light_errorContainer">#FFDAD6</color>
     <color name="md_light_onErrorContainer">#410002</color>
 
-    <!-- Dark theme — Material 3 roles -->
-    <color name="md_dark_primary">#B7C3FF</color>
-    <color name="md_dark_onPrimary">#00227A</color>
-    <color name="md_dark_primaryContainer">#003AA8</color>
-    <color name="md_dark_onPrimaryContainer">#DDE1FF</color>
-    <color name="md_dark_secondary">#6FDBCB</color>
-    <color name="md_dark_onSecondary">#00382F</color>
-    <color name="md_dark_secondaryContainer">#005046</color>
-    <color name="md_dark_onSecondaryContainer">#8CF8E5</color>
-    <color name="md_dark_tertiary">#FFB77C</color>
-    <color name="md_dark_onTertiary">#4A2800</color>
-    <color name="md_dark_tertiaryContainer">#6A3C00</color>
-    <color name="md_dark_onTertiaryContainer">#FFDCB8</color>
-    <color name="md_dark_background">#121319</color>
-    <color name="md_dark_onBackground">#E3E2E9</color>
-    <color name="md_dark_surface">#1B1C22</color>
-    <color name="md_dark_onSurface">#E3E2E9</color>
-    <color name="md_dark_surfaceVariant">#45464F</color>
-    <color name="md_dark_onSurfaceVariant">#C6C6D0</color>
-    <color name="md_dark_outline">#90909A</color>
-    <color name="md_dark_outlineVariant">#45464F</color>
-    <color name="md_dark_error">#FFB4AB</color>
-    <color name="md_dark_onError">#690005</color>
-    <color name="md_dark_errorContainer">#93000A</color>
-    <color name="md_dark_onErrorContainer">#FFDAD6</color>
+    <!-- Dark theme — Material 3 roles. Charcoal "console body" background, brighter/desaturated
+         Joy-Con red + blue for text/icon roles, deep saturated containers. -->
+    <color name="md_dark_primary">#FFB4A8</color>
+    <color name="md_dark_onPrimary">#690500</color>
+    <color name="md_dark_primaryContainer">#930006</color>
+    <color name="md_dark_onPrimaryContainer">#FFDAD4</color>
+    <color name="md_dark_secondary">#86D3EE</color>
+    <color name="md_dark_onSecondary">#00363F</color>
+    <color name="md_dark_secondaryContainer">#004E5C</color>
+    <color name="md_dark_onSecondaryContainer">#B8EAFF</color>
+    <color name="md_dark_tertiary">#F0DD86</color>
+    <color name="md_dark_onTertiary">#3A2E00</color>
+    <color name="md_dark_tertiaryContainer">#554500</color>
+    <color name="md_dark_onTertiaryContainer">#FFF0AD</color>
+    <color name="md_dark_background">#151316</color>
+    <color name="md_dark_onBackground">#E6E1E5</color>
+    <color name="md_dark_surface">#1E1B1E</color>
+    <color name="md_dark_onSurface">#E6E1E5</color>
+    <color name="md_dark_surfaceVariant">#46464A</color>
+    <color name="md_dark_onSurfaceVariant">#C7C5C9</color>
+    <color name="md_dark_outline">#918F93</color>
+    <color name="md_dark_outlineVariant">#46464A</color>
+    <!-- Shifted toward rose rather than Material's default red-orange so it doesn't read as
+         "the same red" as colorPrimary next to it. -->
+    <color name="md_dark_error">#FFB1C8</color>
+    <color name="md_dark_onError">#650029</color>
+    <color name="md_dark_errorContainer">#7E0043</color>
+    <color name="md_dark_onErrorContainer">#FFD9E3</color>
 
     <!-- App-specific status colors (connection state indicators) -->
     <color name="status_connected">#12B76A</color>
-    <color name="status_connecting">#F5820D</color>
+    <color name="status_connecting">#F5C400</color>
     <color name="status_disconnected">#8E8E99</color>
     <color name="status_error">#F04438</color>
 
     <!-- Chat bubble surfaces -->
-    <color name="bubble_sent_light">#2E5CFF</color>
-    <color name="bubble_received_light">#E3E5F2</color>
-    <color name="bubble_sent_dark">#3A5CD1</color>
-    <color name="bubble_received_dark">#2A2C34</color>
+    <color name="bubble_sent_light">#FF3C28</color>
+    <color name="bubble_received_light">#E4E2E6</color>
+    <color name="bubble_sent_dark">#C1291B</color>
+    <color name="bubble_received_dark">#2A2830</color>
 
     <!-- Arena canvas (ArenaView) -->
-    <color name="arena_cell_fill_light">#DCEBFF</color>
-    <color name="arena_cell_fill_dark">#182338</color>
+    <color name="arena_cell_fill_light">#DCF4FF</color>
+    <color name="arena_cell_fill_dark">#0F2A33</color>
     <color name="arena_grid_line_light">#FFFFFF</color>
-    <color name="arena_grid_line_dark">#2E3E58</color>
+    <color name="arena_grid_line_dark">#1E4550</color>
     <color name="arena_obstacle_fill">#2B2E38</color>
     <color name="arena_obstacle_text">#FFFFFF</color>
-    <color name="arena_target_face">#FFC107</color>
-    <color name="arena_robot_fill">#2E5CFF</color>
-    <color name="arena_robot_footprint">#402E5CFF</color>
+    <color name="arena_target_face">#F5C400</color>
+    <color name="arena_robot_fill">#0AB9E6</color>
+    <color name="arena_robot_footprint">#400AB9E6</color>
     <color name="arena_robot_outline">#FFFFFF</color>
     <color name="arena_drag_ghost_valid">#12B76A</color>
     <color name="arena_drag_ghost_invalid">#F04438</color>
+
+    <!-- Control page: a single molded gamepad body (Xbox-style), always dark charcoal regardless
+         of the app's light/dark theme. Face buttons use the classic Y/X/B/A colorway; only X
+         (strafe left) and B (strafe right) do anything — Y, A, both sticks and the view/menu/home
+         dots are decorative, like the real controller's unused-by-us buttons. -->
+    <color name="controller_body">#1E1E22</color>
+    <color name="controller_dpad">#3A3A40</color>
+    <color name="joystick_base">#151316</color>
+    <color name="joystick_cap">#59595F</color>
+    <color name="joystick_cap_highlight">#8A8A91</color>
+    <color name="xbox_button_yellow">#F5C400</color>
+    <color name="xbox_button_blue">#2F7FE0</color>
+    <color name="xbox_button_red">#FF3C28</color>
+    <color name="xbox_button_green">#43A047</color>
 </resources>
