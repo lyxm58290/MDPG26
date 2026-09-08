@@ -75,11 +75,16 @@ class ArenaView @JvmOverloads constructor(
 
     private val cellFillColor = context.themeColor(R.attr.arenaCellFill)
     private val gridLineColor = context.themeColor(R.attr.arenaGridLine)
+    private val gridLabelColor = context.themeColor(R.attr.arenaGridLabel)
 
     private val cellPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val gridLinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = dp(1f)
+    }
+    private val gridLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = gridLabelColor
+        textAlign = Paint.Align.LEFT
     }
     private val obstaclePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -162,6 +167,29 @@ class ArenaView @JvmOverloads constructor(
         for (row in 0..arenaState.height) {
             val y = row * cellSizePx
             canvas.drawLine(0f, y, width.toFloat(), y, gridLinePaint)
+        }
+        drawGridLabels(canvas)
+    }
+
+    /**
+     * Column indices along the top edge (anchored to each column's top-left) and row indices
+     * along the left edge (anchored to each row's bottom-left) — offset to opposite corners so
+     * the two label sets don't collide in the shared (0, 0) cell.
+     */
+    private fun drawGridLabels(canvas: Canvas) {
+        gridLabelPaint.textSize = cellSizePx * GRID_LABEL_TEXT_SCALE
+        val padding = cellSizePx * 0.08f
+        val fm = gridLabelPaint.fontMetrics
+
+        for (col in 0 until arenaState.width) {
+            val x = col * cellSizePx + padding
+            val y = padding - fm.ascent
+            canvas.drawText(col.toString(), x, y, gridLabelPaint)
+        }
+        for (row in 0 until arenaState.height) {
+            val x = padding
+            val y = (row + 1) * cellSizePx - padding - fm.descent
+            canvas.drawText(row.toString(), x, y, gridLabelPaint)
         }
     }
 
@@ -332,6 +360,7 @@ class ArenaView @JvmOverloads constructor(
         // recognized target result (checklist C.9) is the meaningful value, so it's shown larger.
         const val OBSTACLE_ID_TEXT_SCALE = 0.22f
         const val TARGET_TEXT_SCALE = 0.42f
+        const val GRID_LABEL_TEXT_SCALE = 0.28f
     }
 }
 

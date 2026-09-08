@@ -30,6 +30,7 @@
         <item name="android:windowLightStatusBar">true</item>
         <item name="arenaCellFill">@color/arena_cell_fill_light</item>
         <item name="arenaGridLine">@color/arena_grid_line_light</item>
+        <item name="arenaGridLabel">@color/arena_grid_label_light</item>
     </style>
 
     <style name="Theme.MDPG26" parent="Base.Theme.MDPG26" />
