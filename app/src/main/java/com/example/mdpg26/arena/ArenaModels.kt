@@ -19,7 +19,7 @@ enum class Facing(val letter: String, val degrees: Float) {
 }
 
 /**
- * A numbered obstacle block: 40cm x 40cm, i.e. a 4x4 footprint of 10cm grid cells. (x, y) is the
+ * A numbered obstacle block: 10cm x 10cm, i.e. a single 10cm grid cell. (x, y) is the
  * TOP-LEFT grid cell of that footprint, origin at the arena's top-left, x increasing right, y
  * increasing down (matching AMDTool's own coordinate convention — see scripts/defaultJson.cs).
  * [imageFace] is required at placement time (asked via a dialog) rather than defaulting to unset.
@@ -70,5 +70,5 @@ data class ArenaState(
 }
 
 const val ARENA_SIZE_GRIDS = 20
-const val OBSTACLE_SIZE_GRIDS = 4
+const val OBSTACLE_SIZE_GRIDS = 1
 const val ROBOT_SIZE_GRIDS = 3
