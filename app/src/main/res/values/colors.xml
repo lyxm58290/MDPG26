@@ -81,6 +81,7 @@
     <color name="arena_grid_label_dark">#4A7A8C</color>
     <color name="arena_obstacle_fill">#2B2E38</color>
     <color name="arena_obstacle_text">#FFFFFF</color>
+    <color name="arena_target_detected_text">#12B76A</color>
     <color name="arena_target_face">#F5C400</color>
     <color name="arena_robot_fill">#0AB9E6</color>
     <color name="arena_robot_footprint">#400AB9E6</color>
