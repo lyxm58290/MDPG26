@@ -9,6 +9,10 @@
         android:icon="@drawable/ic_control"
         android:title="@string/nav_control" />
     <item
+        android:id="@+id/wheelControlFragment"
+        android:icon="@drawable/ic_wheel"
+        android:title="@string/nav_wheel" />
+    <item
         android:id="@+id/arenaFragment"
         android:icon="@drawable/ic_arena"
         android:title="@string/nav_arena" />

@@ -5,6 +5,7 @@
     <!-- Bottom navigation -->
     <string name="nav_terminal">Terminal</string>
     <string name="nav_control">Control</string>
+    <string name="nav_wheel">Wheel</string>
     <string name="nav_arena">Arena</string>
 
     <!-- Connection status strip -->
@@ -81,7 +82,7 @@
     <string name="arena_tool_place">Obstacle</string>
     <string name="arena_tool_remove">Remove</string>
     <string name="arena_tool_robot">Robot</string>
-    <string name="arena_legend">Tap the top-left cell of an empty 4×4 spot to place an obstacle (you\'ll be asked which side faces the target) • drag an obstacle to move it, or off the grid to delete it • tap an obstacle to change its target face • use Robot to set the robot\'s position</string>
+    <string name="arena_legend">Tap an empty cell to place an obstacle (you\'ll be asked which side faces the target) • drag an obstacle to move it, or off the grid to delete it • tap an obstacle to change its target face • use Robot to set the robot\'s position</string>
     <string name="cd_arena_view">Exploration arena grid with obstacles and robot position</string>
     <string name="arena_robot_status_fmt">Robot: (%1$d, %2$d) facing %3$s</string>
     <string name="cd_rotate_robot_left">Rotate robot left</string>

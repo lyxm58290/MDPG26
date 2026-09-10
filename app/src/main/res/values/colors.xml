@@ -102,4 +102,23 @@
     <color name="xbox_button_blue">#2F7FE0</color>
     <color name="xbox_button_red">#FF3C28</color>
     <color name="xbox_button_green">#43A047</color>
+
+    <!-- Wheel tab: a screen-accurate F1 steering wheel (open-bottomed yoke, not a round car
+         wheel), always dark carbon regardless of the app's light/dark theme. Button colors follow
+         a real wheel's mixed colorway (red/yellow/blue/white); the center MFD glows digital green
+         when idle and F1 red when disconnected. -->
+    <color name="wheel_body_carbon_light">#1A1A1A</color>
+    <color name="wheel_body_carbon_dark">#0D0D0D</color>
+    <color name="wheel_grip">#262626</color>
+    <color name="wheel_display_bg">#000000</color>
+    <color name="wheel_display_bezel">#2A2A2A</color>
+    <color name="wheel_display_text_ok">#00FF41</color>
+    <color name="wheel_display_text_alert">#E10600</color>
+    <color name="wheel_btn_blue">#0090D0</color>
+    <color name="wheel_btn_red">#E10600</color>
+    <color name="wheel_btn_yellow">#FFD100</color>
+    <color name="wheel_btn_white">#FFFFFF</color>
+    <color name="wheel_dial_ring">#4A4A4A</color>
+    <color name="wheel_dial_indicator">#FFFFFF</color>
+    <color name="wheel_label_gray">#CCCCCC</color>
 </resources>

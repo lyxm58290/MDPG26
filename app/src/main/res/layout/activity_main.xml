@@ -9,6 +9,14 @@
     android:orientation="vertical"
     tools:context=".ui.main.MainActivity">
 
+    <!-- Toolbar + connection status strip (C.2), grouped so WheelControlFragment can hide them
+         as a unit and reclaim their height for the driving wheel — see MainActivity. -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -19,7 +27,6 @@
         app:title="@string/app_title"
         app:titleTextColor="?attr/colorOnSurface" />
 
-    <!-- Persistent Bluetooth connection status strip, visible across every tab (C.2) -->
     <LinearLayout
         android:id="@+id/statusStrip"
         android:layout_width="match_parent"
@@ -145,6 +152,8 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="?attr/colorOutlineVariant" />
+
+    </LinearLayout>
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
