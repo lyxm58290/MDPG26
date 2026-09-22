@@ -39,19 +39,18 @@ data class Obstacle(
     val rows: IntRange get() = y until y + size
 }
 
-/** The robot's footprint is sizeInGrids x sizeInGrids (30cm x 30cm = 3x3), centered on (x, y). */
+/** The robot's footprint is sizeInGrids x sizeInGrids (30cm x 30cm = 3x3). (x, y) is the
+ *  BOTTOM-LEFT grid cell of that footprint as rendered, matching [Obstacle]'s own (x, y)
+ *  convention: a robot flush in the arena's bottom-left corner is (0, 0). */
 data class RobotState(
     val x: Int,
     val y: Int,
     val facing: Facing = Facing.NORTH,
     val sizeInGrids: Int = ROBOT_SIZE_GRIDS
 ) {
-    /** True if the given cell falls within this robot's centered footprint. */
-    fun contains(px: Int, py: Int): Boolean {
-        val half = sizeInGrids / 2
-        return px in (x - half) until (x - half + sizeInGrids) &&
-            py in (y - half) until (y - half + sizeInGrids)
-    }
+    /** True if the given cell falls within this robot's footprint. */
+    fun contains(px: Int, py: Int): Boolean =
+        px in x until x + sizeInGrids && py in y until y + sizeInGrids
 }
 
 /** Arena is 20x20 grid cells, each cell 10cm (a 200cm x 200cm arena). */

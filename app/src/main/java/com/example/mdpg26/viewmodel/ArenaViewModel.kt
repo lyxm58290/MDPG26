@@ -93,8 +93,9 @@ class ArenaViewModel : ViewModel() {
         return updated
     }
 
-    /** Repositions the robot's center cell. Local UI setup only — no ROBOT,... message exists
-     *  for the app to send; that format is reserved for incoming RPi position updates (C.10). */
+    /** Repositions the robot's bottom-left cell. Local UI setup only — no ROBOT,... message
+     *  exists for the app to send; that format is reserved for incoming RPi position updates
+     *  (C.10). */
     fun moveRobot(x: Int, y: Int) {
         val current = _state.value
         if (!robotInBounds(current, x, y)) return
@@ -121,8 +122,7 @@ class ArenaViewModel : ViewModel() {
     }
 
     private fun robotInBounds(state: ArenaState, x: Int, y: Int): Boolean {
-        val half = state.robot.sizeInGrids / 2
-        return x - half >= 0 && x + half <= state.width - 1 &&
-            y - half >= 0 && y + half <= state.height - 1
+        val size = state.robot.sizeInGrids
+        return x >= 0 && y >= 0 && x + size <= state.width && y + size <= state.height
     }
 }

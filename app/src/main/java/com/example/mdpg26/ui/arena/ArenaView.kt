@@ -266,12 +266,13 @@ class ArenaView @JvmOverloads constructor(
     }
 
     private fun drawRobot(canvas: Canvas, robot: RobotState) {
-        val half = robot.sizeInGrids / 2f
-        val centerX = (robot.x + 0.5f) * cellSizePx
-        val centerY = (arenaState.height - robot.y - 0.5f) * cellSizePx
-        val footprintLeft = centerX - half * cellSizePx
-        val footprintTop = centerY - half * cellSizePx
+        // Same bottom-left-origin flip as footprintRect() — robot.x/y is the footprint's
+        // bottom-left cell, matching Obstacle's convention.
+        val footprintLeft = robot.x * cellSizePx
+        val footprintTop = (arenaState.height - robot.y - robot.sizeInGrids) * cellSizePx
         val footprintSize = robot.sizeInGrids * cellSizePx
+        val centerX = footprintLeft + footprintSize / 2f
+        val centerY = footprintTop + footprintSize / 2f
 
         canvas.drawRect(
             footprintLeft, footprintTop,
