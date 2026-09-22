@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="20dp">
+        android:paddingBottom="12dp">
 
         <LinearLayout
             android:id="@+id/bannerNotConnected"
@@ -89,6 +89,7 @@
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <TextView
+            android:id="@+id/textLegend"
             style="@style/TextAppearance.Material3.BodySmall"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -102,7 +103,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="16dp"
             app:strokeColor="?attr/colorOutlineVariant">
@@ -118,7 +119,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 

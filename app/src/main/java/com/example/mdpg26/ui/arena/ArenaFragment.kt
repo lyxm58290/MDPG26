@@ -48,6 +48,12 @@ class ArenaFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Applied from arguments (set on the childFragmentManager's FragmentFactory before this
+        // fragment is even created — see WheelFragment.onCreate) rather than via a post-hoc call
+        // from the embedding fragment, so there's no risk of a frame where these show then hide.
+        val showToolControls = arguments?.getBoolean(ARG_SHOW_TOOL_CONTROLS, true) ?: true
+        if (!showToolControls) setToolControlsVisible(false)
+
         // Read the group's own checkedButtonId rather than reacting to each button's individual
         // checked/unchecked event: MaterialButtonToggleGroup fires those per-child in layout order
         // on every switch, so trusting a single event's isChecked/checkedId can catch a stale
@@ -76,6 +82,7 @@ class ArenaFragment : Fragment() {
         }
         binding.arenaView.onObstacleTapRequested = { id -> showFacePickerForExistingObstacle(id) }
         binding.arenaView.onRobotPlaceRequested = { x, y -> arenaViewModel.moveRobot(x, y) }
+        binding.arenaView.onRobotTapRequested = { arenaViewModel.rotateRobot(clockwise = true) }
 
         binding.btnRotateRobotLeft.setOnClickListener { arenaViewModel.rotateRobot(clockwise = false) }
         binding.btnRotateRobotRight.setOnClickListener { arenaViewModel.rotateRobot(clockwise = true) }
@@ -157,13 +164,37 @@ class ArenaFragment : Fragment() {
         }
     }
 
+    /**
+     * Sets the active tool from outside this fragment. Used by [com.example.mdpg26.ui.wheel.WheelFragment],
+     * which relocates the place/remove/robot buttons into its own controller footer (to save
+     * vertical space) instead of showing this fragment's own toggle group — see [setToolControlsVisible].
+     */
+    fun setTool(tool: ArenaView.Tool) {
+        _binding?.arenaView?.tool = tool
+    }
+
+    /** Hides this fragment's own tool toggle group + legend when an embedding fragment provides
+     *  its own controls for them instead (see [setTool]). */
+    fun setToolControlsVisible(visible: Boolean) {
+        val visibility = if (visible) View.VISIBLE else View.GONE
+        _binding?.toolToggleGroup?.visibility = visibility
+        _binding?.textLegend?.visibility = visibility
+    }
+
     override fun onDestroyView() {
         binding.arenaView.onObstaclePlaceRequested = null
         binding.arenaView.onObstacleRemoveRequested = null
         binding.arenaView.onObstacleMoveRequested = null
         binding.arenaView.onObstacleTapRequested = null
         binding.arenaView.onRobotPlaceRequested = null
+        binding.arenaView.onRobotTapRequested = null
         super.onDestroyView()
         _binding = null
+    }
+
+    companion object {
+        /** Boolean fragment argument: false hides the tool toggle group + legend at creation
+         *  time (see [WheelFragment][com.example.mdpg26.ui.wheel.WheelFragment]'s FragmentFactory). */
+        const val ARG_SHOW_TOOL_CONTROLS = "show_tool_controls"
     }
 }

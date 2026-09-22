@@ -30,7 +30,7 @@
     <LinearLayout
         android:id="@+id/statusStrip"
         android:layout_width="match_parent"
-        android:layout_height="68dp"
+        android:layout_height="56dp"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
@@ -149,6 +149,7 @@
     </LinearLayout>
 
     <View
+        android:id="@+id/statusStripDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="?attr/colorOutlineVariant" />
@@ -168,6 +169,9 @@
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="52dp"
+        app:itemIconSize="20dp"
+        app:labelVisibilityMode="unlabeled"
         app:menu="@menu/bottom_nav_menu" />
 
 </LinearLayout>

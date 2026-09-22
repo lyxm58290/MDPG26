@@ -35,11 +35,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { view, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            // Top inset lives on the root, not the toolbar, so the space is still reserved
-            // when WheelControlFragment hides topBar (see setupNavigation()).
-            view.setPadding(view.paddingLeft, bars.top, view.paddingRight, view.paddingBottom)
+            binding.toolbar.setPadding(
+                binding.toolbar.paddingLeft, bars.top, binding.toolbar.paddingRight, binding.toolbar.paddingBottom
+            )
             binding.bottomNav.setPadding(
                 binding.bottomNav.paddingLeft, binding.bottomNav.paddingTop, binding.bottomNav.paddingRight, bars.bottom
             )
@@ -56,13 +56,6 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         binding.bottomNav.setupWithNavController(navController)
-
-        // WheelControlFragment needs its landscape wheel to dominate the screen, so the toolbar
-        // and connection status strip (otherwise shown on every tab, C.2) step aside for it;
-        // the bottom nav stays so the tab can still be switched away from.
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.topBar.visibility = if (destination.id == R.id.wheelControlFragment) View.GONE else View.VISIBLE
-        }
     }
 
     private fun setupStatusStrip() {

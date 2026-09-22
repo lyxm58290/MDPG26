@@ -77,6 +77,13 @@
     <string name="action_start">Start</string>
     <string name="action_cancel">Cancel</string>
 
+    <!-- Wheel tab: F1-wheel style combined cockpit -->
+    <string name="cmd_begin_explore_short">Exp</string>
+    <string name="cmd_begin_fastest_short">FP</string>
+    <string name="cmd_send_arena_short">ArIn</string>
+    <string name="cd_wheel_bluetooth">Bluetooth connection</string>
+    <string name="wheel_screen_empty">No messages yet</string>
+
     <!-- Arena tab (C.5-C.7) -->
     <string name="arena_banner_not_connected">Not connected — obstacle updates won\'t reach the robot</string>
     <string name="arena_tool_place">Obstacle</string>

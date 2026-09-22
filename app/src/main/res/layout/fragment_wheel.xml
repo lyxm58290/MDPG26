@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:orientation="vertical"
+    tools:context=".ui.wheel.WheelFragment">
+
+    <!-- Exploration arena: the actual Arena tab embedded as a child fragment, so this is the
+         exact same layout and gesture/tool logic (place/remove obstacle, place robot,
+         target-face picker, rotate) as the Arena tab — not a re-implementation. Claims all the
+         space the fixed-height wheel footer below doesn't need. -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/arenaFragmentContainer"
+        android:name="com.example.mdpg26.ui.arena.ArenaFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- F1-wheel control footer (checklist C.3): a molded bar (same dark "controller" language
+         as the Control tab) with a D-pad on the left, a second button diamond on the right, a
+         dashboard "screen" showing the terminal log in the middle, and the mission + arena tool
+         buttons along the bottom edge. -->
+    <FrameLayout
+        android:id="@+id/wheelContainer"
+        android:layout_width="match_parent"
+        android:layout_height="190dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="4dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:cardBackgroundColor="@color/controller_body"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnBluetooth"
+                    style="@style/Widget.Material3.Button.IconButton.Filled"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:contentDescription="@string/cd_wheel_bluetooth"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    app:backgroundTint="@color/controller_dpad"
+                    app:cornerRadius="15dp"
+                    app:icon="@drawable/ic_bluetooth"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="14dp"
+                    app:iconTint="@color/white"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- Left D-pad: forward / reverse / turn left / turn right (strafe). -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/leftDpad"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    app:layout_constraintBottom_toTopOf="@id/missionRow"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.5">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnForward"
+                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:contentDescription="@string/cmd_forward"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_arrow_up"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="13dp"
+                        app:iconTint="@color/white"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReverse"
+                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:contentDescription="@string/cmd_reverse"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_arrow_down"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="13dp"
+                        app:iconTint="@color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTurnLeft"
+                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:contentDescription="@string/cmd_strafe_left"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_arrow_left"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="13dp"
+                        app:iconTint="@color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTurnRight"
+                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:contentDescription="@string/cmd_strafe_right"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_arrow_right"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="13dp"
+                        app:iconTint="@color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Right diamond: top/bottom are decorative (no command); left/right rotate
+                     the robot in place. -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/rightDiamond"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    app:layout_constraintBottom_toTopOf="@id/missionRow"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.5">
+
+                    <View
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:background="@drawable/bg_joystick_cap"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:importantForAccessibility="no"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <View
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:background="@drawable/bg_joystick_cap"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:importantForAccessibility="no"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRotateLeft"
+                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:contentDescription="@string/cmd_rotate_left"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="15dp"
+                        app:icon="@drawable/ic_rotate_left"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="13dp"
+                        app:iconTint="@color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRotateRight"
+                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:contentDescription="@string/cmd_rotate_right"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="15dp"
+                        app:icon="@drawable/ic_rotate_right"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="13dp"
+                        app:iconTint="@color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Dashboard "screen": embedded terminal (message log + send bar). Forced to a
+                     dark Material overlay so the reused message-bubble layouts (which pick their
+                     text colors from the app's light/dark theme) stay readable against this
+                     always-dark panel regardless of which app theme is active. -->
+                <LinearLayout
+                    android:id="@+id/screenPanel"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="38dp"
+                    android:layout_marginBottom="6dp"
+                    android:background="@drawable/bg_wheel_screen"
+                    android:orientation="vertical"
+                    android:padding="6dp"
+                    android:theme="@style/ThemeOverlay.Material3.Dark"
+                    app:layout_constraintBottom_toTopOf="@id/missionRow"
+                    app:layout_constraintEnd_toStartOf="@id/rightDiamond"
+                    app:layout_constraintStart_toEndOf="@id/leftDpad"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1">
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerMessages"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:clipToPadding="false"
+                            android:padding="2dp"
+                            tools:listitem="@layout/item_message_received" />
+
+                        <TextView
+                            android:id="@+id/textScreenEmpty"
+                            style="@style/TextAppearance.Material3.LabelSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="@string/wheel_screen_empty"
+                            android:textColor="@color/joystick_cap_highlight"
+                            android:textSize="9sp" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <EditText
+                            android:id="@+id/editMessage"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:hint="@string/terminal_hint"
+                            android:imeOptions="actionSend"
+                            android:inputType="text"
+                            android:maxLines="1"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="2dp"
+                            android:textColor="@color/white"
+                            android:textColorHint="@color/joystick_cap_highlight"
+                            android:textSize="9sp" />
+
+                        <ImageButton
+                            android:id="@+id/btnSend"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/cd_send"
+                            android:padding="3dp"
+                            android:src="@drawable/ic_send"
+                            app:tint="@color/white" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Bottom strip: mission buttons on the left, arena obstacle/robot tools
+                     (relocated from the Arena tab's own toggle group, to save that vertical
+                     space) on the right. -->
+                <LinearLayout
+                    android:id="@+id/missionRow"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnBeginExplore"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:contentDescription="@string/cmd_begin_explore"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingHorizontal="0dp"
+                        android:paddingVertical="0dp"
+                        android:text="@string/cmd_begin_explore_short"
+                        android:textColor="@color/white"
+                        android:textSize="9sp"
+                        app:backgroundTint="?attr/colorPrimary"
+                        app:cornerRadius="19dp" />
+
+                    <Space
+                        android:layout_width="12dp"
+                        android:layout_height="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnBeginFastest"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:contentDescription="@string/cmd_begin_fastest"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingHorizontal="0dp"
+                        android:paddingVertical="0dp"
+                        android:text="@string/cmd_begin_fastest_short"
+                        android:textColor="?attr/colorOnTertiary"
+                        android:textSize="9sp"
+                        app:backgroundTint="?attr/colorTertiary"
+                        app:cornerRadius="19dp" />
+
+                    <Space
+                        android:layout_width="12dp"
+                        android:layout_height="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSendArena"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:contentDescription="@string/cmd_send_arena"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingHorizontal="0dp"
+                        android:paddingVertical="0dp"
+                        android:text="@string/cmd_send_arena_short"
+                        android:textColor="@color/white"
+                        android:textSize="9sp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="19dp" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/toolToggleGroup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:selectionRequired="false"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnToolPlace"
+                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:contentDescription="@string/arena_tool_place"
+                            android:insetLeft="0dp"
+                            android:insetTop="0dp"
+                            android:insetRight="0dp"
+                            android:insetBottom="0dp"
+                            app:backgroundTint="@color/selector_wheel_tool_bg"
+                            app:cornerRadius="19dp"
+                            app:icon="@drawable/ic_add_box"
+                            app:iconGravity="textStart"
+                            app:iconPadding="0dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnToolRemove"
+                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:contentDescription="@string/arena_tool_remove"
+                            android:insetLeft="0dp"
+                            android:insetTop="0dp"
+                            android:insetRight="0dp"
+                            android:insetBottom="0dp"
+                            app:backgroundTint="@color/selector_wheel_tool_bg"
+                            app:cornerRadius="19dp"
+                            app:icon="@drawable/ic_delete"
+                            app:iconGravity="textStart"
+                            app:iconPadding="0dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnToolRobot"
+                            style="@style/Widget.Material3.Button.IconButton.Filled"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:contentDescription="@string/arena_tool_robot"
+                            android:insetLeft="0dp"
+                            android:insetTop="0dp"
+                            android:insetRight="0dp"
+                            android:insetBottom="0dp"
+                            app:backgroundTint="@color/selector_wheel_tool_bg"
+                            app:cornerRadius="19dp"
+                            app:icon="@drawable/ic_robot"
+                            app:iconGravity="textStart"
+                            app:iconPadding="0dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/white" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+
+</LinearLayout>

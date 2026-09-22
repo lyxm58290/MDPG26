@@ -50,6 +50,9 @@ class ArenaView @JvmOverloads constructor(
     /** Fired on a plain tap (no drag) on an existing obstacle (tool == NONE) — edit its face. */
     var onObstacleTapRequested: ((id: Int) -> Unit)? = null
 
+    /** Fired on a plain tap (no drag) on the robot's own footprint (tool == NONE) — rotate it. */
+    var onRobotTapRequested: (() -> Unit)? = null
+
     /** Fired on ACTION_UP over a valid cell while [Tool.PLACE_ROBOT] is active. */
     var onRobotPlaceRequested: ((x: Int, y: Int) -> Unit)? = null
 
@@ -125,28 +128,44 @@ class ArenaView @JvmOverloads constructor(
         color = ContextCompat.getColor(context, R.color.arena_drag_ghost_invalid)
     }
 
+    // Reserves a small gutter on the left/bottom edges for the row/column coordinate labels
+    // (0..19), so the numbers don't overlap the grid itself. Bottom is a bit taller than left so
+    // the column labels sit with clear room above the view's true bottom edge (and away from the
+    // enclosing card's rounded corners) rather than packed right against it.
+    private val leftGutterPx = dp(16f)
+    private val bottomGutterPx = dp(20f)
+    private val labelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = context.themeColor(com.google.android.material.R.attr.colorOnSurfaceVariant)
+        textAlign = Paint.Align.CENTER
+        textSize = dp(9f)
+    }
+
+    private fun gridWidthPx(viewWidth: Int): Float = (viewWidth - leftGutterPx).coerceAtLeast(0f)
+
     fun setState(newState: ArenaState) {
         arenaState = newState
-        if (width > 0) cellSizePx = width.toFloat() / arenaState.width
+        if (width > 0) cellSizePx = gridWidthPx(width) / arenaState.width
         invalidate()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val widthSize = MeasureSpec.getSize(widthMeasureSpec)
         val aspect = arenaState.height.toFloat() / arenaState.width.toFloat()
-        val desiredHeight = (widthSize * aspect).toInt()
+        val desiredHeight = (gridWidthPx(widthSize) * aspect + bottomGutterPx).toInt()
         setMeasuredDimension(widthSize, desiredHeight)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        cellSizePx = if (arenaState.width > 0) w.toFloat() / arenaState.width else 0f
+        cellSizePx = if (arenaState.width > 0) gridWidthPx(w) / arenaState.width else 0f
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (cellSizePx <= 0f) return
 
+        canvas.save()
+        canvas.translate(leftGutterPx, 0f)
         drawGrid(canvas)
 
         val draggedId = dragState?.obstacleId
@@ -155,19 +174,46 @@ class ArenaView @JvmOverloads constructor(
         }
         dragState?.let { drawDragGhost(canvas, it) }
         drawRobot(canvas, arenaState.robot)
+        canvas.restore()
+
+        drawAxisLabels(canvas)
+    }
+
+    /** Row numbers down the left gutter, column numbers along the bottom gutter. The underlying
+     *  data model keeps its own (top-left origin, y increasing down) convention — matching
+     *  AMDTool/the RPi wire protocol, see [com.example.mdpg26.arena.Obstacle] — but this view
+     *  renders it bottom-up, so row 0 is drawn (and labeled) at the bottom of the grid. */
+    private fun drawAxisLabels(canvas: Canvas) {
+        val fm = labelTextPaint.fontMetrics
+        val baselineOffset = -(fm.descent + fm.ascent) / 2f
+        val gridHeightPx = arenaState.height * cellSizePx
+
+        for (row in 0 until arenaState.height) {
+            val cy = (arenaState.height - row - 1) * cellSizePx + cellSizePx / 2f
+            canvas.drawText(row.toString(), leftGutterPx / 2f, cy + baselineOffset, labelTextPaint)
+        }
+        // Anchored close to the grid (not centered in the gutter) so it sits well clear of the
+        // view's true bottom edge and the enclosing card's rounded bottom corners.
+        val colLabelY = gridHeightPx + dp(11f) + baselineOffset
+        for (col in 0 until arenaState.width) {
+            val cx = leftGutterPx + col * cellSizePx + cellSizePx / 2f
+            canvas.drawText(col.toString(), cx, colLabelY, labelTextPaint)
+        }
     }
 
     private fun drawGrid(canvas: Canvas) {
+        val gridWidthPx = arenaState.width * cellSizePx
+        val gridHeightPx = arenaState.height * cellSizePx
         cellPaint.color = cellFillColor
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), cellPaint)
+        canvas.drawRect(0f, 0f, gridWidthPx, gridHeightPx, cellPaint)
         gridLinePaint.color = gridLineColor
         for (col in 0..arenaState.width) {
             val x = col * cellSizePx
-            canvas.drawLine(x, 0f, x, height.toFloat(), gridLinePaint)
+            canvas.drawLine(x, 0f, x, gridHeightPx, gridLinePaint)
         }
         for (row in 0..arenaState.height) {
             val y = row * cellSizePx
-            canvas.drawLine(0f, y, width.toFloat(), y, gridLinePaint)
+            canvas.drawLine(0f, y, gridWidthPx, y, gridLinePaint)
         }
         drawGridLabels(canvas)
     }
@@ -194,9 +240,11 @@ class ArenaView @JvmOverloads constructor(
         }
     }
 
+    /** Maps a footprint's data-space (top-left origin, y-down) row/col to the screen rect, flipped
+     *  so row 0 renders at the bottom of the grid — see [drawAxisLabels]. */
     private fun footprintRect(gridX: Int, gridY: Int, size: Int): RectF {
         val left = gridX * cellSizePx
-        val top = gridY * cellSizePx
+        val top = (arenaState.height - gridY - size) * cellSizePx
         val span = size * cellSizePx
         val inset = cellSizePx * 0.06f
         return RectF(left + inset, top + inset, left + span - inset, top + span - inset)
@@ -220,6 +268,9 @@ class ArenaView @JvmOverloads constructor(
 
         targetFacePaint.alpha = alpha
         val inset = targetFacePaint.strokeWidth / 2f
+        // NORTH/SOUTH/EAST/WEST here mean "top/bottom/right/left of the square as drawn on
+        // screen" (see Facing's kdoc) — a purely screen-relative annotation, unrelated to which
+        // data row is rendered where, so this doesn't change with the arena's row-0-at-bottom flip.
         when (obstacle.imageFace) {
             Facing.NORTH -> canvas.drawLine(rect.left, rect.top + inset, rect.right, rect.top + inset, targetFacePaint)
             Facing.SOUTH -> canvas.drawLine(rect.left, rect.bottom - inset, rect.right, rect.bottom - inset, targetFacePaint)
@@ -239,7 +290,7 @@ class ArenaView @JvmOverloads constructor(
     private fun drawRobot(canvas: Canvas, robot: RobotState) {
         val half = robot.sizeInGrids / 2f
         val centerX = (robot.x + 0.5f) * cellSizePx
-        val centerY = (robot.y + 0.5f) * cellSizePx
+        val centerY = (arenaState.height - robot.y - 0.5f) * cellSizePx
         val footprintLeft = centerX - half * cellSizePx
         val footprintTop = centerY - half * cellSizePx
         val footprintSize = robot.sizeInGrids * cellSizePx
@@ -251,6 +302,9 @@ class ArenaView @JvmOverloads constructor(
         )
 
         canvas.save()
+        // Facing is screen-relative (NORTH = top of the footprint, as drawn) — same convention as
+        // the obstacle face indicator — so this rotation doesn't change with the row-0-at-bottom
+        // flip; only centerY (this footprint's position) needed that.
         canvas.rotate(robot.facing.degrees, centerX, centerY)
         val margin = footprintSize * 0.18f
         val path = Path().apply {
@@ -266,8 +320,8 @@ class ArenaView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (cellSizePx <= 0f) return false
-        val gridX = (event.x / cellSizePx).toInt()
-        val gridY = (event.y / cellSizePx).toInt()
+        val gridX = ((event.x - leftGutterPx) / cellSizePx).toInt()
+        val gridY = arenaState.height - 1 - (event.y / cellSizePx).toInt()
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -341,6 +395,10 @@ class ArenaView @JvmOverloads constructor(
             } else {
                 onObstacleTapRequested?.invoke(drag.obstacleId)
             }
+        } else if (tool == Tool.NONE && arenaState.robot.contains(downGridX, downGridY)) {
+            // A tap landing on the robot (no tool selected) rotates it in place — mirrors how a
+            // tap on an obstacle edits its face regardless of a dedicated "edit" tool.
+            onRobotTapRequested?.invoke()
         } else {
             when (tool) {
                 Tool.PLACE_OBSTACLE -> onObstaclePlaceRequested?.invoke(downGridX, downGridY)
