@@ -9,8 +9,8 @@
     android:orientation="vertical"
     tools:context=".ui.main.MainActivity">
 
-    <!-- Toolbar + connection status strip (C.2), grouped so WheelControlFragment can hide them
-         as a unit and reclaim their height for the driving wheel — see MainActivity. -->
+    <!-- Toolbar + connection status strip (C.2), grouped so WheelFragment can hide them
+         as a unit and reclaim their height for the controller + grid — see MainActivity. -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"

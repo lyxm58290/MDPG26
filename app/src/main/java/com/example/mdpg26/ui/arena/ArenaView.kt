@@ -78,16 +78,11 @@ class ArenaView @JvmOverloads constructor(
 
     private val cellFillColor = context.themeColor(R.attr.arenaCellFill)
     private val gridLineColor = context.themeColor(R.attr.arenaGridLine)
-    private val gridLabelColor = context.themeColor(R.attr.arenaGridLabel)
 
     private val cellPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val gridLinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = dp(1f)
-    }
-    private val gridLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = gridLabelColor
-        textAlign = Paint.Align.LEFT
     }
     private val obstaclePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -128,11 +123,13 @@ class ArenaView @JvmOverloads constructor(
         color = ContextCompat.getColor(context, R.color.arena_drag_ghost_invalid)
     }
 
-    // Reserves a small gutter on the left/bottom edges for the row/column coordinate labels
-    // (0..19), so the numbers don't overlap the grid itself. Bottom is a bit taller than left so
-    // the column labels sit with clear room above the view's true bottom edge (and away from the
-    // enclosing card's rounded corners) rather than packed right against it.
+    // Reserves a small gutter on all four edges for the row/column coordinate ticks (0..20), so
+    // the numbers don't overlap the grid itself. The top/right gutters only need to fit half a
+    // label (the axis's highest tick is centered right on the grid's top/right edge); bottom is a
+    // bit taller than the others so the column labels sit with clear room below the grid.
     private val leftGutterPx = dp(16f)
+    private val topGutterPx = dp(10f)
+    private val rightGutterPx = dp(10f)
     private val bottomGutterPx = dp(20f)
     private val labelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.themeColor(com.google.android.material.R.attr.colorOnSurfaceVariant)
@@ -140,7 +137,8 @@ class ArenaView @JvmOverloads constructor(
         textSize = dp(9f)
     }
 
-    private fun gridWidthPx(viewWidth: Int): Float = (viewWidth - leftGutterPx).coerceAtLeast(0f)
+    private fun gridWidthPx(viewWidth: Int): Float =
+        (viewWidth - leftGutterPx - rightGutterPx).coerceAtLeast(0f)
 
     fun setState(newState: ArenaState) {
         arenaState = newState
@@ -151,7 +149,7 @@ class ArenaView @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val widthSize = MeasureSpec.getSize(widthMeasureSpec)
         val aspect = arenaState.height.toFloat() / arenaState.width.toFloat()
-        val desiredHeight = (gridWidthPx(widthSize) * aspect + bottomGutterPx).toInt()
+        val desiredHeight = (gridWidthPx(widthSize) * aspect + topGutterPx + bottomGutterPx).toInt()
         setMeasuredDimension(widthSize, desiredHeight)
     }
 
@@ -165,7 +163,7 @@ class ArenaView @JvmOverloads constructor(
         if (cellSizePx <= 0f) return
 
         canvas.save()
-        canvas.translate(leftGutterPx, 0f)
+        canvas.translate(leftGutterPx, topGutterPx)
         drawGrid(canvas)
 
         val draggedId = dragState?.obstacleId
@@ -179,24 +177,27 @@ class ArenaView @JvmOverloads constructor(
         drawAxisLabels(canvas)
     }
 
-    /** Row numbers down the left gutter, column numbers along the bottom gutter. The underlying
-     *  data model keeps its own (top-left origin, y increasing down) convention — matching
-     *  AMDTool/the RPi wire protocol, see [com.example.mdpg26.arena.Obstacle] — but this view
-     *  renders it bottom-up, so row 0 is drawn (and labeled) at the bottom of the grid. */
+    /** Ruler-style axis ticks (0..width down the left gutter, 0..height along the bottom gutter)
+     *  at grid-line positions rather than per-cell, so the x- and y-axes share a single "0" tick
+     *  at the grid's bottom-left corner. The underlying data model keeps its own (top-left origin,
+     *  y increasing down) convention — matching AMDTool/the RPi wire protocol, see
+     *  [com.example.mdpg26.arena.Obstacle] — but this view renders it bottom-up, so 0 is drawn at
+     *  the bottom of the grid. */
     private fun drawAxisLabels(canvas: Canvas) {
         val fm = labelTextPaint.fontMetrics
         val baselineOffset = -(fm.descent + fm.ascent) / 2f
         val gridHeightPx = arenaState.height * cellSizePx
 
-        for (row in 0 until arenaState.height) {
-            val cy = (arenaState.height - row - 1) * cellSizePx + cellSizePx / 2f
+        for (row in 0..arenaState.height) {
+            val cy = topGutterPx + gridHeightPx - row * cellSizePx
             canvas.drawText(row.toString(), leftGutterPx / 2f, cy + baselineOffset, labelTextPaint)
         }
         // Anchored close to the grid (not centered in the gutter) so it sits well clear of the
-        // view's true bottom edge and the enclosing card's rounded bottom corners.
-        val colLabelY = gridHeightPx + dp(11f) + baselineOffset
-        for (col in 0 until arenaState.width) {
-            val cx = leftGutterPx + col * cellSizePx + cellSizePx / 2f
+        // view's true bottom edge. Starts at 1 — the shared origin's "0" is already drawn by the
+        // row loop above.
+        val colLabelY = topGutterPx + gridHeightPx + dp(11f) + baselineOffset
+        for (col in 1..arenaState.width) {
+            val cx = leftGutterPx + col * cellSizePx
             canvas.drawText(col.toString(), cx, colLabelY, labelTextPaint)
         }
     }
@@ -214,29 +215,6 @@ class ArenaView @JvmOverloads constructor(
         for (row in 0..arenaState.height) {
             val y = row * cellSizePx
             canvas.drawLine(0f, y, gridWidthPx, y, gridLinePaint)
-        }
-        drawGridLabels(canvas)
-    }
-
-    /**
-     * Column indices along the top edge (anchored to each column's top-left) and row indices
-     * along the left edge (anchored to each row's bottom-left) — offset to opposite corners so
-     * the two label sets don't collide in the shared (0, 0) cell.
-     */
-    private fun drawGridLabels(canvas: Canvas) {
-        gridLabelPaint.textSize = cellSizePx * GRID_LABEL_TEXT_SCALE
-        val padding = cellSizePx * 0.08f
-        val fm = gridLabelPaint.fontMetrics
-
-        for (col in 0 until arenaState.width) {
-            val x = col * cellSizePx + padding
-            val y = padding - fm.ascent
-            canvas.drawText(col.toString(), x, y, gridLabelPaint)
-        }
-        for (row in 0 until arenaState.height) {
-            val x = padding
-            val y = (row + 1) * cellSizePx - padding - fm.descent
-            canvas.drawText(row.toString(), x, y, gridLabelPaint)
         }
     }
 
@@ -321,7 +299,7 @@ class ArenaView @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (cellSizePx <= 0f) return false
         val gridX = ((event.x - leftGutterPx) / cellSizePx).toInt()
-        val gridY = arenaState.height - 1 - (event.y / cellSizePx).toInt()
+        val gridY = arenaState.height - 1 - ((event.y - topGutterPx) / cellSizePx).toInt()
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -417,7 +395,6 @@ class ArenaView @JvmOverloads constructor(
 
     private companion object {
         const val TARGET_TEXT_SCALE = 0.42f
-        const val GRID_LABEL_TEXT_SCALE = 0.28f
     }
 }
 

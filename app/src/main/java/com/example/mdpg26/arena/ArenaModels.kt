@@ -45,7 +45,14 @@ data class RobotState(
     val y: Int,
     val facing: Facing = Facing.NORTH,
     val sizeInGrids: Int = ROBOT_SIZE_GRIDS
-)
+) {
+    /** True if the given cell falls within this robot's centered footprint. */
+    fun contains(px: Int, py: Int): Boolean {
+        val half = sizeInGrids / 2
+        return px in (x - half) until (x - half + sizeInGrids) &&
+            py in (y - half) until (y - half + sizeInGrids)
+    }
+}
 
 /** Arena is 20x20 grid cells, each cell 10cm (a 200cm x 200cm arena). */
 data class ArenaState(

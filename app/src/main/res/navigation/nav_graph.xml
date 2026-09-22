@@ -18,6 +18,12 @@
         tools:layout="@layout/fragment_control" />
 
     <fragment
+        android:id="@+id/wheelFragment"
+        android:name="com.example.mdpg26.ui.wheel.WheelFragment"
+        android:label="@string/nav_wheel"
+        tools:layout="@layout/fragment_wheel" />
+
+    <fragment
         android:id="@+id/arenaFragment"
         android:name="com.example.mdpg26.ui.arena.ArenaFragment"
         android:label="@string/nav_arena"

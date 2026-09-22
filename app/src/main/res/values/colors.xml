@@ -77,8 +77,6 @@
     <color name="arena_cell_fill_dark">#0F2A33</color>
     <color name="arena_grid_line_light">#FFFFFF</color>
     <color name="arena_grid_line_dark">#1E4550</color>
-    <color name="arena_grid_label_light">#7FA9BA</color>
-    <color name="arena_grid_label_dark">#4A7A8C</color>
     <color name="arena_obstacle_fill">#2B2E38</color>
     <color name="arena_obstacle_text">#FFFFFF</color>
     <color name="arena_target_detected_text">#12B76A</color>
