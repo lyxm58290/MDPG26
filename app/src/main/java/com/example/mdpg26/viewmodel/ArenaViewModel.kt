@@ -93,9 +93,8 @@ class ArenaViewModel : ViewModel() {
         return updated
     }
 
-    /** Repositions the robot's bottom-left cell. Local UI setup only — no ROBOT,... message
-     *  exists for the app to send; that format is reserved for incoming RPi position updates
-     *  (C.10). */
+    /** Repositions the robot's bottom-left cell, e.g. from the "place robot" arena tool or a
+     *  movement button press (see [moveRobotForward] etc.). No-op if out of bounds. */
     fun moveRobot(x: Int, y: Int) {
         val current = _state.value
         if (!robotInBounds(current, x, y)) return
@@ -104,10 +103,32 @@ class ArenaViewModel : ViewModel() {
 
     fun rotateRobot(clockwise: Boolean) {
         _state.update { st ->
-            val current = st.robot.facing
-            val next = if (clockwise) current.next() else current.next().next().next()
+            val next = if (clockwise) st.robot.facing.next() else st.robot.facing.previous()
             st.copy(robot = st.robot.copy(facing = next))
         }
+    }
+
+    /**
+     * Steps the robot's on-screen position by one grid cell per movement-button press, mirroring
+     * the physical movement command sent alongside it (checklist C.3) so the map stays in sync
+     * until the RPi's own reported position ([updateRobotPosition]) next corrects it.
+     */
+    fun moveRobotForward() = stepRobot(_state.value.robot.facing)
+    fun moveRobotReverse() = stepRobot(_state.value.robot.facing.opposite())
+    fun strafeRobotLeft() = stepRobot(_state.value.robot.facing.previous())
+    fun strafeRobotRight() = stepRobot(_state.value.robot.facing.next())
+
+    // Robot (x, y) is bottom-left-origin (see RobotState) — unlike Obstacle's top-left-origin
+    // (x, y) — so y increases upward here, opposite of the obstacle grid's y-down convention.
+    private fun stepRobot(direction: Facing) {
+        val (dx, dy) = when (direction) {
+            Facing.NORTH -> 0 to 1
+            Facing.EAST -> 1 to 0
+            Facing.SOUTH -> 0 to -1
+            Facing.WEST -> -1 to 0
+        }
+        val robot = _state.value.robot
+        moveRobot(robot.x + dx, robot.y + dy)
     }
 
     /**

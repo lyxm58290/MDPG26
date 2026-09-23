@@ -117,21 +117,27 @@ class WheelFragment : Fragment() {
 
         binding.btnForward.setOnClickListener {
             sendCommand(RobotCommands.FORWARD, getString(R.string.cmd_forward))
+            arenaViewModel.moveRobotForward()
         }
         binding.btnReverse.setOnClickListener {
             sendCommand(RobotCommands.REVERSE, getString(R.string.cmd_reverse))
+            arenaViewModel.moveRobotReverse()
         }
         binding.btnTurnLeft.setOnClickListener {
             sendCommand(RobotCommands.STRAFE_LEFT, getString(R.string.cmd_strafe_left))
+            arenaViewModel.strafeRobotLeft()
         }
         binding.btnTurnRight.setOnClickListener {
             sendCommand(RobotCommands.STRAFE_RIGHT, getString(R.string.cmd_strafe_right))
+            arenaViewModel.strafeRobotRight()
         }
         binding.btnRotateLeft.setOnClickListener {
             sendCommand(RobotCommands.ROTATE_LEFT, getString(R.string.cmd_rotate_left))
+            arenaViewModel.rotateRobot(clockwise = false)
         }
         binding.btnRotateRight.setOnClickListener {
             sendCommand(RobotCommands.ROTATE_RIGHT, getString(R.string.cmd_rotate_right))
+            arenaViewModel.rotateRobot(clockwise = true)
         }
 
         binding.btnBeginExplore.setOnClickListener {
