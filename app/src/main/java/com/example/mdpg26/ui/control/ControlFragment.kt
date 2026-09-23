@@ -94,7 +94,7 @@ class ControlFragment : Fragment() {
         }
         binding.btnSendArena.setOnClickListener {
             view?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            viewModel.sendMessage(ArenaProtocol.arenaSnapshot(arenaViewModel.state.value))
+            ArenaProtocol.arenaSnapshot(arenaViewModel.state.value).forEach(viewModel::sendMessage)
         }
 
         observeState()

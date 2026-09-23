@@ -152,7 +152,7 @@ class WheelFragment : Fragment() {
         }
         binding.btnSendArena.setOnClickListener {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            bluetoothViewModel.sendMessage(ArenaProtocol.arenaSnapshot(arenaViewModel.state.value))
+            ArenaProtocol.arenaSnapshot(arenaViewModel.state.value).forEach(bluetoothViewModel::sendMessage)
         }
 
         binding.btnBluetooth.setOnClickListener {

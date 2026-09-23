@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONException
 import org.json.JSONObject
@@ -72,6 +74,11 @@ class AndroidBluetoothController(
         _connectionState.value = ConnectionUiState.Disconnected
     }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
+    // Dispatchers.IO runs launched coroutines on a shared thread pool with no ordering
+    // guarantee, so back-to-back sendMessage() calls (e.g. the arena snapshot's ROBOT message
+    // followed by one OBSTACLE message per obstacle) could otherwise interleave or reorder their
+    // writes on the shared outputStream. This serializes writes to preserve call order.
+    private val sendMutex = Mutex()
     private var socket: BluetoothSocket? = null
     private var serverSocket: BluetoothServerSocket? = null
     private var readJob: Job? = null
@@ -306,8 +313,10 @@ class AndroidBluetoothController(
                 return@launch
             }
             try {
-                s.outputStream.write((text).toByteArray(Charsets.UTF_8))
-                s.outputStream.flush()
+                sendMutex.withLock {
+                    s.outputStream.write(text.toByteArray(Charsets.UTF_8))
+                    s.outputStream.flush()
+                }
                 addMessage(text, MessageDirection.SENT)
             } catch (e: Exception) {
                 Log.w(TAG, "Send failed: ${e.message}")

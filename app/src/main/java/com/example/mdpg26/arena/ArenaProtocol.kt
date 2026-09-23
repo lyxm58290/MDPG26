@@ -1,8 +1,5 @@
 package com.example.mdpg26.arena
 
-import org.json.JSONArray
-import org.json.JSONObject
-
 /**
  * String formats sent out over the Bluetooth link for obstacle placement/move (C.6) and
  * target-face annotation (C.7), combined into one message per the fixed field order below.
@@ -28,32 +25,14 @@ object ArenaProtocol {
         "OBSTACLE_REMOVE,${obstacle.id}"
 
     /**
-     * Full arena snapshot for the algorithm team's path-planning input: robot starting position
-     * plus every obstacle, as one JSON object. [Facing.name] (e.g. "NORTH") is used rather than
-     * [Facing.letter] here since that's the spelled-out form their format expects. Built as a
-     * single line — no embedded newlines — since [sendMessage][com.example.mdpg26.bluetooth.BluetoothController.sendMessage]
-     * frames messages by newline.
+     * Full arena snapshot for the algorithm team's path-planning input: one ROBOT message with
+     * the robot's starting position, followed by one OBSTACLE message per obstacle (reusing
+     * [obstaclePlaced]'s format), in that order. Each entry is sent as its own
+     * [sendMessage][com.example.mdpg26.bluetooth.BluetoothController.sendMessage] call.
      */
-    fun arenaSnapshot(state: ArenaState): String {
-        val robotJson = JSONObject().apply {
-            put("x_coord", state.robot.x)
-            put("y_coord", state.robot.y)
-            put("facing", state.robot.facing.name)
-        }
-        val obstaclesJson = JSONArray()
-        state.obstacles.forEach { obstacle ->
-            obstaclesJson.put(
-                JSONObject().apply {
-                    put("id", obstacle.id)
-                    put("x_coord", obstacle.x)
-                    put("y_coord", obstacle.y)
-                    put("image_side", obstacle.imageFace.name)
-                }
-            )
-        }
-        return JSONObject().apply {
-            put("robot", robotJson)
-            put("obstacles", obstaclesJson)
-        }.toString()
+    fun arenaSnapshot(state: ArenaState): List<String> {
+        val messages = mutableListOf("ROBOT,${state.robot.x},${state.robot.y}")
+        state.obstacles.forEach { obstacle -> messages += obstaclePlaced(obstacle) }
+        return messages
     }
 }
