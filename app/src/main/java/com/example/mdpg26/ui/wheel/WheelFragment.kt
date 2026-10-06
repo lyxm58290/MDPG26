@@ -59,7 +59,7 @@ class WheelFragment : Fragment() {
         )
     }
     private val missionButtons: List<MaterialButton> by lazy {
-        listOf(binding.btnBeginExplore, binding.btnBeginFastest, binding.btnSendArena)
+        listOf(binding.btnBeginExplore, binding.btnBeginFastest, binding.btnSendArena, binding.btnCalibrateStraight)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -159,6 +159,9 @@ class WheelFragment : Fragment() {
         binding.btnSendArena.setOnClickListener {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             ArenaProtocol.arenaSnapshot(arenaViewModel.state.value).forEach(bluetoothViewModel::sendMessage)
+        }
+        binding.btnCalibrateStraight.setOnClickListener {
+            sendCommand(RobotCommands.CALIBRATE_STRAIGHT, getString(R.string.cmd_calibrate_straight))
         }
 
         binding.btnBluetooth.setOnClickListener {

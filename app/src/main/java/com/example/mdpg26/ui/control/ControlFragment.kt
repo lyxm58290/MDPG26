@@ -42,7 +42,7 @@ class ControlFragment : Fragment() {
         )
     }
     private val missionButtons: List<MaterialButton> by lazy {
-        listOf(binding.btnBeginExplore, binding.btnBeginFastest, binding.btnSendArena)
+        listOf(binding.btnBeginExplore, binding.btnBeginFastest, binding.btnSendArena, binding.btnCalibrateStraight)
     }
 
     override fun onCreateView(
@@ -101,6 +101,9 @@ class ControlFragment : Fragment() {
         binding.btnSendArena.setOnClickListener {
             view?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             ArenaProtocol.arenaSnapshot(arenaViewModel.state.value).forEach(viewModel::sendMessage)
+        }
+        binding.btnCalibrateStraight.setOnClickListener {
+            sendCommand(RobotCommands.CALIBRATE_STRAIGHT, getString(R.string.cmd_calibrate_straight))
         }
 
         observeState()

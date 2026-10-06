@@ -17,4 +17,6 @@ object RobotCommands {
 
     const val BEGIN_EXPLORE = "beginExplore"
     const val BEGIN_FASTEST = "beginFastest"
+
+    const val CALIBRATE_STRAIGHT = "calibStraight"
 }

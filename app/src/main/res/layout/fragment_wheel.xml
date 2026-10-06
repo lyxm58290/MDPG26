@@ -396,6 +396,30 @@
                         app:cornerRadius="19dp" />
 
                     <Space
+                        android:layout_width="12dp"
+                        android:layout_height="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCalibrateStraight"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:contentDescription="@string/cmd_calibrate_straight"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingHorizontal="0dp"
+                        android:paddingVertical="0dp"
+                        android:text="@string/cmd_calibrate_straight_short"
+                        android:textColor="@color/white"
+                        android:textSize="9sp"
+                        app:backgroundTint="@color/xbox_button_green"
+                        app:cornerRadius="19dp" />
+
+                    <Space
                         android:layout_width="0dp"
                         android:layout_height="1dp"
                         android:layout_weight="1" />
