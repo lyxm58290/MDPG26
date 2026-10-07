@@ -142,6 +142,12 @@ class ArenaViewModel : ViewModel() {
         _state.update { st -> st.copy(robot = st.robot.copy(x = x, y = y, facing = facing)) }
     }
 
+    /** Clears every obstacle, returns the robot to its start cell, and restarts obstacle ids at 1. */
+    fun resetArena() {
+        nextObstacleId = 1
+        _state.value = ArenaState()
+    }
+
     private fun robotInBounds(state: ArenaState, x: Int, y: Int): Boolean {
         val size = state.robot.sizeInGrids
         return x >= 0 && y >= 0 && x + size <= state.width && y + size <= state.height

@@ -68,7 +68,9 @@
     <string name="cmd_begin_explore">Start Exploration</string>
     <string name="cmd_begin_fastest">Start Fastest Path</string>
     <string name="cmd_send_arena">Send Arena Info</string>
+    <string name="cmd_send_robot_location">Send Robot Location</string>
     <string name="cmd_calibrate_straight">Calibrate Straight</string>
+    <string name="cmd_reset_arena">Reset Arena</string>
     <string name="last_command_none">Last sent: —</string>
     <string name="last_command_fmt">Last sent: %1$s</string>
     <string name="confirm_begin_explore_title">Start exploration?</string>
@@ -76,13 +78,18 @@
     <string name="confirm_begin_fastest_title">Start fastest path?</string>
     <string name="confirm_begin_fastest_body">This sends \"beginFastest\" to the robot and starts the fastest-path run.</string>
     <string name="action_start">Start</string>
+    <string name="confirm_reset_arena_title">Reset arena?</string>
+    <string name="confirm_reset_arena_body">This clears all obstacles, moves the robot back to its start position, and sends \"resetArena\" to the robot.</string>
+    <string name="action_reset">Reset</string>
     <string name="action_cancel">Cancel</string>
 
     <!-- Wheel tab: F1-wheel style combined cockpit -->
     <string name="cmd_begin_explore_short">Exp</string>
     <string name="cmd_begin_fastest_short">FP</string>
     <string name="cmd_send_arena_short">ArIn</string>
+    <string name="cmd_send_robot_location_short">RLoc</string>
     <string name="cmd_calibrate_straight_short">Calb</string>
+    <string name="cmd_reset_arena_short">Rst</string>
     <string name="cd_wheel_bluetooth">Bluetooth connection</string>
     <string name="wheel_screen_empty">No messages yet</string>
 

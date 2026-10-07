@@ -400,6 +400,30 @@
                         android:layout_height="1dp" />
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSendRobotLocation"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:contentDescription="@string/cmd_send_robot_location"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingHorizontal="0dp"
+                        android:paddingVertical="0dp"
+                        android:text="@string/cmd_send_robot_location_short"
+                        android:textColor="@color/white"
+                        android:textSize="9sp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="19dp" />
+
+                    <Space
+                        android:layout_width="12dp"
+                        android:layout_height="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCalibrateStraight"
                         style="@style/Widget.Material3.Button"
                         android:layout_width="38dp"
@@ -417,6 +441,30 @@
                         android:textColor="@color/white"
                         android:textSize="9sp"
                         app:backgroundTint="@color/xbox_button_green"
+                        app:cornerRadius="19dp" />
+
+                    <Space
+                        android:layout_width="12dp"
+                        android:layout_height="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnResetArena"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:contentDescription="@string/cmd_reset_arena"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingHorizontal="0dp"
+                        android:paddingVertical="0dp"
+                        android:text="@string/cmd_reset_arena_short"
+                        android:textColor="?attr/colorOnError"
+                        android:textSize="9sp"
+                        app:backgroundTint="?attr/colorError"
                         app:cornerRadius="19dp" />
 
                     <Space

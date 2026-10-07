@@ -19,4 +19,6 @@ object RobotCommands {
     const val BEGIN_FASTEST = "beginFastest"
 
     const val CALIBRATE_STRAIGHT = "calibStraight"
+
+    const val RESET_ARENA = "resetArena"
 }

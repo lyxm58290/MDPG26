@@ -60,7 +60,7 @@ data class ArenaState(
     val width: Int = ARENA_SIZE_GRIDS,
     val height: Int = ARENA_SIZE_GRIDS,
     val obstacles: List<Obstacle> = emptyList(),
-    val robot: RobotState = RobotState(x = 2, y = ARENA_SIZE_GRIDS - 3)
+    val robot: RobotState = RobotState(x = 0, y = 0, facing = Facing.NORTH)
 ) {
     /** Finds whichever obstacle's footprint contains the given cell, if any. */
     fun obstacleAt(x: Int, y: Int): Obstacle? = obstacles.firstOrNull { x in it.cells && y in it.rows }

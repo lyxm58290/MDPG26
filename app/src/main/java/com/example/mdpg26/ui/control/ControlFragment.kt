@@ -42,7 +42,8 @@ class ControlFragment : Fragment() {
         )
     }
     private val missionButtons: List<MaterialButton> by lazy {
-        listOf(binding.btnBeginExplore, binding.btnBeginFastest, binding.btnSendArena, binding.btnCalibrateStraight)
+        listOf(binding.btnBeginExplore, binding.btnBeginFastest, binding.btnSendArena, binding.btnSendRobotLocation, binding.btnCalibrateStraight,
+            binding.btnResetArena)
     }
 
     override fun onCreateView(
@@ -102,9 +103,14 @@ class ControlFragment : Fragment() {
             view?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             ArenaProtocol.arenaSnapshot(arenaViewModel.state.value).forEach(viewModel::sendMessage)
         }
+        binding.btnSendRobotLocation.setOnClickListener {
+            view?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            viewModel.sendMessage(ArenaProtocol.robotLocation(arenaViewModel.state.value.robot))
+        }
         binding.btnCalibrateStraight.setOnClickListener {
             sendCommand(RobotCommands.CALIBRATE_STRAIGHT, getString(R.string.cmd_calibrate_straight))
         }
+        binding.btnResetArena.setOnClickListener { confirmResetArena() }
 
         observeState()
     }
@@ -115,6 +121,18 @@ class ControlFragment : Fragment() {
             .setMessage(bodyRes)
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.action_start) { _, _ -> sendCommand(command, label) }
+            .show()
+    }
+
+    private fun confirmResetArena() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.confirm_reset_arena_title)
+            .setMessage(R.string.confirm_reset_arena_body)
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.action_reset) { _, _ ->
+                arenaViewModel.resetArena()
+                sendCommand(RobotCommands.RESET_ARENA, getString(R.string.cmd_reset_arena))
+            }
             .show()
     }
 

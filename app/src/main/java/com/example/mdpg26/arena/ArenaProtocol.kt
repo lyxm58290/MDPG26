@@ -24,14 +24,18 @@ object ArenaProtocol {
     fun obstacleRemoved(obstacle: Obstacle): String =
         "OBSTACLE_REMOVE,${obstacle.id}"
 
+    /** ROBOT,<x>,<y>,<DIR> where DIR is the full heading name: NORTH/EAST/SOUTH/WEST. */
+    fun robotLocation(robot: RobotState): String =
+        "ROBOT,${robot.x},${robot.y},${robot.facing.name}"
+
     /**
-     * Full arena snapshot for the algorithm team's path-planning input: one ROBOT message with
-     * the robot's starting position, followed by one OBSTACLE message per obstacle (reusing
+     * Full arena snapshot for the algorithm team's path-planning input: one ROBOT message
+     * (reusing [robotLocation]'s format), followed by one OBSTACLE message per obstacle (reusing
      * [obstaclePlaced]'s format), in that order. Each entry is sent as its own
      * [sendMessage][com.example.mdpg26.bluetooth.BluetoothController.sendMessage] call.
      */
     fun arenaSnapshot(state: ArenaState): List<String> {
-        val messages = mutableListOf("ROBOT,${state.robot.x},${state.robot.y}")
+        val messages = mutableListOf(robotLocation(state.robot))
         state.obstacles.forEach { obstacle -> messages += obstaclePlaced(obstacle) }
         return messages
     }

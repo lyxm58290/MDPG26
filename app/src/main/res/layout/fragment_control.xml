@@ -430,6 +430,18 @@
                     app:iconTint="?attr/colorPrimary" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSendRobotLocation"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/cmd_send_robot_location"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_send"
+                    app:iconGravity="textStart"
+                    app:iconTint="?attr/colorPrimary" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCalibrateStraight"
                     style="@style/Widget.Material3.Button"
                     android:layout_width="match_parent"
@@ -439,6 +451,17 @@
                     android:textColor="@color/white"
                     app:backgroundTint="@color/xbox_button_green"
                     app:cornerRadius="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnResetArena"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/cmd_reset_arena"
+                    android:textColor="?attr/colorError"
+                    app:cornerRadius="16dp"
+                    app:strokeColor="?attr/colorError" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
