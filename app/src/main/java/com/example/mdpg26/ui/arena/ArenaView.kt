@@ -5,8 +5,10 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -15,9 +17,11 @@ import androidx.core.content.ContextCompat
 import com.example.mdpg26.R
 import com.example.mdpg26.arena.ArenaState
 import com.example.mdpg26.arena.Facing
+import com.example.mdpg26.arena.OBSTACLE_SIZE_GRIDS
 import com.example.mdpg26.arena.Obstacle
 import com.example.mdpg26.arena.RobotState
 import kotlin.math.abs
+import kotlin.math.floor
 
 /**
  * Renders the 2D exploration arena (checklist C.5) and turns raw touch gestures into semantic
@@ -38,7 +42,8 @@ class ArenaView @JvmOverloads constructor(
 
     var tool: Tool = Tool.NONE
 
-    /** Fired on ACTION_UP over an empty, in-bounds cell while [Tool.PLACE_OBSTACLE] is active. */
+    /** Fired when a [Tool.PLACE_OBSTACLE] press-and-hold (see [placementCell]) is released over an
+     *  empty, in-bounds cell. */
     var onObstaclePlaceRequested: ((x: Int, y: Int) -> Unit)? = null
 
     /** Fired on ACTION_UP over an obstacle while [Tool.REMOVE_OBSTACLE] is active. */
@@ -68,6 +73,20 @@ class ArenaView @JvmOverloads constructor(
         val currentY: Int
     )
     private var dragState: DragState? = null
+
+    private data class GridCell(val x: Int, val y: Int)
+
+    // Press-and-hold placement with [Tool.PLACE_OBSTACLE]: while the finger is down (having
+    // started on an empty cell), it tracks the cell under the finger — shown via [Guide] — and
+    // releasing places the obstacle there. placementCell is null while the finger is off the grid
+    // (release cancels).
+    private var isPlacing = false
+    private var placementCell: GridCell? = null
+
+    /** Where an obstacle would land mid-gesture (placing or dragging): drives the guide lines
+     *  crossing at its bottom-left corner, the highlighted axis ticks, and the coordinate badge.
+     *  [valid] is false when it would overlap another obstacle. */
+    private data class Guide(val x: Int, val y: Int, val size: Int, val valid: Boolean)
 
     private var downGridX = -1
     private var downGridY = -1
@@ -122,6 +141,17 @@ class ArenaView @JvmOverloads constructor(
         strokeWidth = dp(2.5f)
         color = ContextCompat.getColor(context, R.color.arena_drag_ghost_invalid)
     }
+    private val guideLinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(1.5f)
+    }
+    private val guideFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val badgeTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.arena_obstacle_text)
+        textAlign = Paint.Align.CENTER
+        textSize = dp(12f)
+        typeface = Typeface.DEFAULT_BOLD
+    }
 
     // Reserves a small gutter on all four edges for the row/column coordinate ticks (0..20), so
     // the numbers don't overlap the grid itself. The top/right gutters only need to fit half a
@@ -135,6 +165,10 @@ class ArenaView @JvmOverloads constructor(
         color = context.themeColor(com.google.android.material.R.attr.colorOnSurfaceVariant)
         textAlign = Paint.Align.CENTER
         textSize = dp(9f)
+    }
+    /** Axis tick matching the guide lines — see [drawAxisLabels]. */
+    private val highlightedLabelTextPaint = Paint(labelTextPaint).apply {
+        typeface = Typeface.DEFAULT_BOLD
     }
 
     private fun gridWidthPx(viewWidth: Int): Float =
@@ -172,9 +206,17 @@ class ArenaView @JvmOverloads constructor(
         }
         dragState?.let { drawDragGhost(canvas, it) }
         drawRobot(canvas, arenaState.robot)
+        val guide = activeGuide()
+        if (guide != null) {
+            // A drag's ghost outline is drawn above (it also covers off-grid drops, which have
+            // no guide); a placement has no existing obstacle, so draw its outline here.
+            if (isPlacing) drawFootprintOutline(canvas, guide.x, guide.y, guide.size, guide.valid)
+            drawGuideLines(canvas, guide)
+        }
         canvas.restore()
 
-        drawAxisLabels(canvas)
+        drawAxisLabels(canvas, guide)
+        guide?.let { drawCoordinateBadge(canvas, it) }
     }
 
     /** Ruler-style axis ticks (0..width down the left gutter, 0..height along the bottom gutter)
@@ -183,14 +225,20 @@ class ArenaView @JvmOverloads constructor(
      *  y increasing down) convention — matching AMDTool/the RPi wire protocol, see
      *  [com.example.mdpg26.arena.Obstacle] — but this view renders it bottom-up, so 0 is drawn at
      *  the bottom of the grid. */
-    private fun drawAxisLabels(canvas: Canvas) {
+    private fun drawAxisLabels(canvas: Canvas, guide: Guide?) {
         val fm = labelTextPaint.fontMetrics
         val baselineOffset = -(fm.descent + fm.ascent) / 2f
         val gridHeightPx = arenaState.height * cellSizePx
 
+        // While placing/dragging, the ticks the guide lines run through are highlighted so the
+        // obstacle's (x, y) reads straight off the axes. The shared origin "0" lights up for either.
+        if (guide != null) highlightedLabelTextPaint.color = guideColor(guide)
+        fun paintFor(highlighted: Boolean) = if (highlighted) highlightedLabelTextPaint else labelTextPaint
+
         for (row in 0..arenaState.height) {
             val cy = topGutterPx + gridHeightPx - row * cellSizePx
-            canvas.drawText(row.toString(), leftGutterPx / 2f, cy + baselineOffset, labelTextPaint)
+            val highlighted = guide != null && (row == guide.y || (row == 0 && guide.x == 0))
+            canvas.drawText(row.toString(), leftGutterPx / 2f, cy + baselineOffset, paintFor(highlighted))
         }
         // Anchored close to the grid (not centered in the gutter) so it sits well clear of the
         // view's true bottom edge. Starts at 1 — the shared origin's "0" is already drawn by the
@@ -198,8 +246,66 @@ class ArenaView @JvmOverloads constructor(
         val colLabelY = topGutterPx + gridHeightPx + dp(11f) + baselineOffset
         for (col in 1..arenaState.width) {
             val cx = leftGutterPx + col * cellSizePx
-            canvas.drawText(col.toString(), cx, colLabelY, labelTextPaint)
+            canvas.drawText(col.toString(), cx, colLabelY, paintFor(guide != null && col == guide.x))
         }
+    }
+
+    /** The in-progress placement or drag, if any. A tap-in-progress on an obstacle (not yet past
+     *  touch slop) shows nothing, nor does a drag that's left the grid — dropping there deletes the
+     *  obstacle, which the red ghost outline already conveys. */
+    private fun activeGuide(): Guide? {
+        placementCell?.let { cell ->
+            return Guide(cell.x, cell.y, OBSTACLE_SIZE_GRIDS, valid = canPlaceAt(cell))
+        }
+        val drag = dragState?.takeIf { isDragging } ?: return null
+        if (!arenaState.footprintInBounds(drag.currentX, drag.currentY, drag.size)) return null
+        val overlaps = arenaState.overlapsAnyObstacle(drag.currentX, drag.currentY, drag.size, excludeId = drag.obstacleId)
+        return Guide(drag.currentX, drag.currentY, drag.size, valid = !overlaps)
+    }
+
+    /** Green where the obstacle can go, red where it'd overlap another (release there is ignored). */
+    private fun guideColor(guide: Guide): Int =
+        if (guide.valid) dragValidPaint.color else dragInvalidPaint.color
+
+    private fun canPlaceAt(cell: GridCell): Boolean =
+        !arenaState.overlapsAnyObstacle(cell.x, cell.y, OBSTACLE_SIZE_GRIDS)
+
+    /** Two full-span guide lines crossing at the guide's bottom-left corner (the obstacle's (x, y)
+     *  — same row-0-at-bottom flip as [footprintRect]), lining up with the axis ticks. */
+    private fun drawGuideLines(canvas: Canvas, guide: Guide) {
+        val gridWidthPx = arenaState.width * cellSizePx
+        val gridHeightPx = arenaState.height * cellSizePx
+        val cornerX = guide.x * cellSizePx
+        val cornerY = (arenaState.height - guide.y) * cellSizePx
+        val color = guideColor(guide)
+
+        guideLinePaint.color = color
+        canvas.drawLine(0f, cornerY, gridWidthPx, cornerY, guideLinePaint)
+        canvas.drawLine(cornerX, 0f, cornerX, gridHeightPx, guideLinePaint)
+
+        guideFillPaint.color = color
+        canvas.drawCircle(cornerX, cornerY, dp(3.5f), guideFillPaint)
+    }
+
+    /** "(x, y)" pill floating above the obstacle — clear of the finger, which sits on top of the
+     *  obstacle itself — or below it when there's no room above. Drawn in view coordinates (not
+     *  grid-translated) so it can spill into the gutters near the grid's edges. */
+    private fun drawCoordinateBadge(canvas: Canvas, guide: Guide) {
+        val text = context.getString(R.string.arena_coordinate_badge_fmt, guide.x, guide.y)
+        val fm = badgeTextPaint.fontMetrics
+        val badgeWidth = badgeTextPaint.measureText(text) + dp(16f)
+        val badgeHeight = fm.descent - fm.ascent + dp(8f)
+        val gap = dp(BADGE_FINGER_CLEARANCE_DP)
+
+        val footprint = footprintRect(guide.x, guide.y, guide.size).apply { offset(leftGutterPx, topGutterPx) }
+        val above = footprint.top - gap - badgeHeight
+        val top = if (above >= 0f) above else footprint.bottom + gap
+        val left = (footprint.centerX() - badgeWidth / 2f).coerceIn(0f, (width - badgeWidth).coerceAtLeast(0f))
+        val badge = RectF(left, top, left + badgeWidth, top + badgeHeight)
+
+        guideFillPaint.color = guideColor(guide)
+        canvas.drawRoundRect(badge, badgeHeight / 2f, badgeHeight / 2f, guideFillPaint)
+        canvas.drawText(text, badge.centerX(), badge.centerY() - (fm.descent + fm.ascent) / 2f, badgeTextPaint)
     }
 
     private fun drawGrid(canvas: Canvas) {
@@ -258,11 +364,15 @@ class ArenaView @JvmOverloads constructor(
     }
 
     private fun drawDragGhost(canvas: Canvas, drag: DragState) {
-        val rect = footprintRect(drag.currentX, drag.currentY, drag.size)
-        val corner = cellSizePx * 0.2f
         val fits = arenaState.footprintInBounds(drag.currentX, drag.currentY, drag.size) &&
             !arenaState.overlapsAnyObstacle(drag.currentX, drag.currentY, drag.size, excludeId = drag.obstacleId)
-        canvas.drawRoundRect(rect, corner, corner, if (fits) dragValidPaint else dragInvalidPaint)
+        drawFootprintOutline(canvas, drag.currentX, drag.currentY, drag.size, fits)
+    }
+
+    private fun drawFootprintOutline(canvas: Canvas, gridX: Int, gridY: Int, size: Int, valid: Boolean) {
+        val rect = footprintRect(gridX, gridY, size)
+        val corner = cellSizePx * 0.2f
+        canvas.drawRoundRect(rect, corner, corner, if (valid) dragValidPaint else dragInvalidPaint)
     }
 
     private fun drawRobot(canvas: Canvas, robot: RobotState) {
@@ -299,8 +409,10 @@ class ArenaView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (cellSizePx <= 0f) return false
-        val gridX = ((event.x - leftGutterPx) / cellSizePx).toInt()
-        val gridY = arenaState.height - 1 - ((event.y - topGutterPx) / cellSizePx).toInt()
+        // floor() rather than toInt(): truncation would map a touch just outside the grid's
+        // left/top edge (a fraction of a cell negative) onto row/column 0 instead of off-grid.
+        val gridX = floor((event.x - leftGutterPx) / cellSizePx).toInt()
+        val gridY = arenaState.height - 1 - floor((event.y - topGutterPx) / cellSizePx).toInt()
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -309,7 +421,10 @@ class ArenaView @JvmOverloads constructor(
                 downGridX = gridX
                 downGridY = gridY
                 isDragging = false
-                arenaState.obstacleAt(gridX, gridY)?.let { hit ->
+                isPlacing = false
+                placementCell = null
+                val hit = arenaState.obstacleAt(gridX, gridY)
+                if (hit != null) {
                     dragState = DragState(
                         obstacleId = hit.id,
                         size = hit.size,
@@ -318,6 +433,11 @@ class ArenaView @JvmOverloads constructor(
                         currentX = hit.x,
                         currentY = hit.y
                     )
+                } else if (tool == Tool.PLACE_OBSTACLE &&
+                    arenaState.footprintInBounds(gridX, gridY, OBSTACLE_SIZE_GRIDS)
+                ) {
+                    isPlacing = true
+                    updatePlacementCell(gridX, gridY)
                 }
                 parent?.requestDisallowInterceptTouchEvent(true)
                 return true
@@ -326,34 +446,70 @@ class ArenaView @JvmOverloads constructor(
                 if (!isDragging) {
                     val dx = event.x - downRawX
                     val dy = event.y - downRawY
-                    if (abs(dx) > touchSlopPx || abs(dy) > touchSlopPx) isDragging = true
+                    if (abs(dx) > touchSlopPx || abs(dy) > touchSlopPx) {
+                        isDragging = true
+                        // Guides only show once it's clearly a drag (see activeGuide()), so redraw
+                        // now even if the obstacle hasn't left its starting cell yet.
+                        if (dragState != null) invalidate()
+                    }
                 }
                 dragState?.let { d ->
                     val newX = gridX - d.offsetX
                     val newY = gridY - d.offsetY
                     if (d.currentX != newX || d.currentY != newY) {
                         dragState = d.copy(currentX = newX, currentY = newY)
+                        if (arenaState.footprintInBounds(newX, newY, d.size)) tickCellChange()
                         invalidate()
                     }
                 }
+                if (isPlacing) updatePlacementCell(gridX, gridY)
                 return true
             }
             MotionEvent.ACTION_UP -> {
                 handleUp(gridX, gridY)
-                dragState = null
-                invalidate()
+                clearGesture()
                 return true
             }
             MotionEvent.ACTION_CANCEL -> {
-                dragState = null
-                invalidate()
+                clearGesture()
                 return true
             }
         }
         return super.onTouchEvent(event)
     }
 
+    private fun clearGesture() {
+        dragState = null
+        isPlacing = false
+        placementCell = null
+        invalidate()
+    }
+
+    /** Moves the placement guides to the cell under the finger, hiding them while it's off-grid. */
+    private fun updatePlacementCell(gridX: Int, gridY: Int) {
+        val cell = GridCell(gridX, gridY)
+            .takeIf { arenaState.footprintInBounds(gridX, gridY, OBSTACLE_SIZE_GRIDS) }
+        if (cell == placementCell) return
+        placementCell = cell
+        if (cell != null) tickCellChange()
+        invalidate()
+    }
+
+    /** Light tick each time a placed/dragged obstacle snaps to a new cell, so sliding between
+     *  cells is felt as well as seen. */
+    private fun tickCellChange() {
+        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+    }
+
     private fun handleUp(gridX: Int, gridY: Int) {
+        if (isPlacing) {
+            // Placement is decided by where the finger is released, not where it went down. Off
+            // the grid or over an existing obstacle cancels, rather than opening the face picker
+            // for a placement the view model would only reject.
+            placementCell?.takeIf(::canPlaceAt)?.let { onObstaclePlaceRequested?.invoke(it.x, it.y) }
+            performClick()
+            return
+        }
         val drag = dragState
         // A drag that started on an obstacle always moves it, regardless of which tool button is
         // selected — otherwise dragging silently does nothing unless the user has deselected every
@@ -380,9 +536,10 @@ class ArenaView @JvmOverloads constructor(
             onRobotTapRequested?.invoke()
         } else {
             when (tool) {
-                Tool.PLACE_OBSTACLE -> onObstaclePlaceRequested?.invoke(downGridX, downGridY)
                 Tool.PLACE_ROBOT -> onRobotPlaceRequested?.invoke(downGridX, downGridY)
-                Tool.REMOVE_OBSTACLE, Tool.NONE -> Unit
+                // Empty in-bounds cells are handled by the press-and-hold placement above; a
+                // PLACE_OBSTACLE press that gets here started off the grid, so there's nothing to place.
+                Tool.PLACE_OBSTACLE, Tool.REMOVE_OBSTACLE, Tool.NONE -> Unit
             }
         }
         performClick()
@@ -396,6 +553,8 @@ class ArenaView @JvmOverloads constructor(
 
     private companion object {
         const val TARGET_TEXT_SCALE = 0.42f
+        /** Gap between the obstacle and its coordinate badge — enough to clear a fingertip. */
+        const val BADGE_FINGER_CLEARANCE_DP = 28f
     }
 }
 
