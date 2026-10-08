@@ -45,6 +45,16 @@ interface BluetoothController {
      * byte-for-byte (e.g. Task 2's `START`).
      */
     fun sendRaw(text: String)
+
+    /**
+     * Sends [messages] strictly in order, one at a time, for multi-message batches the peer must
+     * be able to tell apart (e.g. the arena snapshot). After each message, waits for the peer to
+     * echo it back (bounded by a timeout), then pauses a fixed gap before the next — so messages
+     * that carry no delimiter of their own don't run together on the RFCOMM byte stream. Other
+     * sends queue behind the batch rather than interleaving with it. Ignored if a batch is
+     * already in progress.
+     */
+    fun sendSequence(messages: List<String>)
     fun clearMessages()
     fun release()
 }

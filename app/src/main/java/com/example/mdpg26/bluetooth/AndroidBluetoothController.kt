@@ -17,6 +17,7 @@ import androidx.core.content.edit
 import com.example.mdpg26.R
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -74,11 +76,13 @@ class AndroidBluetoothController(
         _connectionState.value = ConnectionUiState.Disconnected
     }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
-    // Dispatchers.IO runs launched coroutines on a shared thread pool with no ordering
-    // guarantee, so back-to-back sendMessage() calls (e.g. the arena snapshot's ROBOT message
-    // followed by one OBSTACLE message per obstacle) could otherwise interleave or reorder their
-    // writes on the shared outputStream. This serializes writes to preserve call order.
+    // Serializes writes on the shared outputStream so two sends never interleave their bytes.
+    // It does NOT preserve call order across separate sendMessage() calls — each launches its own
+    // coroutine on Dispatchers.IO's thread pool, and whichever reaches the lock first writes
+    // first. Batches that must arrive in order go through sendSequence(), which holds this lock
+    // for the whole batch.
     private val sendMutex = Mutex()
+    private var sequenceJob: Job? = null
     private var socket: BluetoothSocket? = null
     private var serverSocket: BluetoothServerSocket? = null
     private var readJob: Job? = null
@@ -124,6 +128,10 @@ class AndroidBluetoothController(
 
     private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
     override val errors: SharedFlow<String> = _errors
+
+    // Every incoming line, for sendSequence() to spot the peer echoing back what it just sent.
+    // Nobody collects it otherwise, in which case tryEmit() just drops the line.
+    private val receivedLines = MutableSharedFlow<String>(extraBufferCapacity = 64)
 
     private var receiverRegistered = false
     private val discoveryReceiver = object : BroadcastReceiver() {
@@ -295,6 +303,7 @@ class AndroidBluetoothController(
         stopListening()
         reconnectJob?.cancel()
         readJob?.cancel()
+        sequenceJob?.cancel()
         closeSocketQuietly()
         BluetoothForegroundService.stop(context)
         _connectionState.value = ConnectionUiState.Disconnected
@@ -329,16 +338,81 @@ class AndroidBluetoothController(
                 return@launch
             }
             try {
-                sendMutex.withLock {
-                    s.outputStream.write(text.toByteArray(Charsets.UTF_8))
-                    s.outputStream.flush()
-                }
+                sendMutex.withLock { writeRaw(s, text) }
                 addMessage(text, MessageDirection.SENT)
             } catch (e: Exception) {
                 Log.w(TAG, "Send failed: ${e.message}")
                 _errors.tryEmit(context.getString(R.string.error_send_failed))
                 onLinkLost()
             }
+        }
+    }
+
+    override fun sendSequence(messages: List<String>) {
+        val batch = messages.filter { it.isNotBlank() }
+        if (batch.isEmpty()) return
+        if (_connectionState.value !is ConnectionUiState.Connected) {
+            _errors.tryEmit(context.getString(R.string.error_send_failed))
+            return
+        }
+        if (sequenceJob?.isActive == true) {
+            addSystemMessage("Still sending the previous batch — ignored")
+            return
+        }
+        sequenceJob = scope.launch {
+            // Held for the whole batch so no other send can slip in between its messages.
+            sendMutex.withLock {
+                // Assume the peer echoes until it fails to once; after that, stop waiting on
+                // echoes for the rest of this batch and rely on the fixed gap alone, so a peer
+                // that never echoes costs one timeout per batch rather than one per message.
+                var awaitEcho = true
+                batch.forEachIndexed { index, text ->
+                    val s = socket
+                    if (s == null) {
+                        _errors.tryEmit(context.getString(R.string.error_send_failed))
+                        return@launch
+                    }
+                    val echoed = try {
+                        if (awaitEcho) writeAndAwaitEcho(s, text) else { writeRaw(s, text); false }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Send failed: ${e.message}")
+                        _errors.tryEmit(context.getString(R.string.error_send_failed))
+                        onLinkLost()
+                        return@launch
+                    }
+                    addMessage(text, MessageDirection.SENT)
+                    if (awaitEcho && !echoed) {
+                        awaitEcho = false
+                        addSystemMessage(
+                            "No echo within ${SEQUENCE_ECHO_TIMEOUT_MS} ms — sending the rest " +
+                                "${SEQUENCE_GAP_MS} ms apart"
+                        )
+                    }
+                    if (index < batch.lastIndex) delay(SEQUENCE_GAP_MS)
+                }
+            }
+        }
+    }
+
+    private fun writeRaw(s: BluetoothSocket, text: String) {
+        s.outputStream.write(text.toByteArray(Charsets.UTF_8))
+        s.outputStream.flush()
+    }
+
+    /**
+     * Writes [text], then waits up to [SEQUENCE_ECHO_TIMEOUT_MS] for the peer to send the same
+     * line back. Returns whether it did; a failed write throws, as with [writeRaw].
+     */
+    private suspend fun writeAndAwaitEcho(s: BluetoothSocket, text: String): Boolean = coroutineScope {
+        // UNDISPATCHED subscribes to receivedLines before the write goes out, so a fast echo
+        // can't arrive in the gap before we start listening for it.
+        val expected = text.trim()
+        val echo = async(start = CoroutineStart.UNDISPATCHED) { receivedLines.first { it == expected } }
+        try {
+            writeRaw(s, text)
+            withTimeoutOrNull(SEQUENCE_ECHO_TIMEOUT_MS) { echo.await() } != null
+        } finally {
+            echo.cancel()
         }
     }
 
@@ -612,6 +686,7 @@ class AndroidBluetoothController(
      */
     private fun addReceivedLine(line: String) {
         addMessage(line, MessageDirection.RECEIVED)
+        receivedLines.tryEmit(line)
         parseStatusUpdate(line)
         when (val target = TargetMessage.parse(line)) {
             is TargetDetection -> _targetDetections.tryEmit(target)
@@ -692,6 +767,11 @@ class AndroidBluetoothController(
         // flushed as its own message, and how often the watchdog checks for that.
         const val READ_IDLE_FLUSH_MS = 150L
         const val READ_WATCHDOG_POLL_MS = 50L
+        // sendSequence() pacing: how long to wait for the peer to echo each message back, and
+        // the pause after each message before the next. The gap must comfortably exceed the
+        // peer's own read-idle flush window, or consecutive messages can still merge on its end.
+        const val SEQUENCE_ECHO_TIMEOUT_MS = 1000L
+        const val SEQUENCE_GAP_MS = 300L
         val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 }

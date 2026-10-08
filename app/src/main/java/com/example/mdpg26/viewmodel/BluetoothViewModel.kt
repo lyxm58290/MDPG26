@@ -37,6 +37,7 @@ class BluetoothViewModel(application: Application) : AndroidViewModel(applicatio
     fun disconnect() = controller.disconnect()
     fun sendMessage(text: String) = controller.sendMessage(text)
     fun sendRaw(text: String) = controller.sendRaw(text)
+    fun sendSequence(messages: List<String>) = controller.sendSequence(messages)
     fun clearMessages() = controller.clearMessages()
 
     override fun onCleared() {

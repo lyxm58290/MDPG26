@@ -31,8 +31,9 @@ object ArenaProtocol {
     /**
      * Full arena snapshot for the algorithm team's path-planning input: one ROBOT message
      * (reusing [robotLocation]'s format), followed by one OBSTACLE message per obstacle (reusing
-     * [obstaclePlaced]'s format), in that order. Each entry is sent as its own
-     * [sendMessage][com.example.mdpg26.bluetooth.BluetoothController.sendMessage] call.
+     * [obstaclePlaced]'s format), in that order. Sent as one
+     * [sendSequence][com.example.mdpg26.bluetooth.BluetoothController.sendSequence] batch, which
+     * paces the messages (echo wait + gap) since none of them carries a delimiter.
      */
     fun arenaSnapshot(state: ArenaState): List<String> {
         val messages = mutableListOf(robotLocation(state.robot))
