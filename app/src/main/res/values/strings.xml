@@ -111,6 +111,8 @@
     <string name="task2_calib_straight">calibStraight</string>
     <string name="task2_start">START</string>
     <string name="task2_reset">Reset</string>
+    <string name="confirm_task2_reset_title">Reset Task 2?</string>
+    <string name="confirm_task2_reset_body">This clears the arrows on both obstacles back to \"\?\". Nothing is sent to the robot.</string>
     <string name="task2_summary_fmt">Obstacle 1: %1$s  |  Obstacle 2: %2$s</string>
     <string name="task2_direction_left">LEFT</string>
     <string name="task2_direction_right">RIGHT</string>

@@ -22,6 +22,7 @@ import com.example.mdpg26.ui.terminal.MessageAdapter
 import com.example.mdpg26.viewmodel.BluetoothViewModel
 import com.example.mdpg26.viewmodel.Task2State
 import com.example.mdpg26.viewmodel.Task2ViewModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 /**
@@ -65,10 +66,7 @@ class Task2Fragment : Fragment() {
             }
         }
 
-        binding.btnReset.setOnClickListener {
-            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            task2ViewModel.clearTargets()
-        }
+        binding.btnReset.setOnClickListener { confirmReset() }
         binding.btnCalibrateStraight.setOnClickListener {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             bluetoothViewModel.sendMessage(RobotCommands.CALIBRATE_STRAIGHT)
@@ -81,6 +79,18 @@ class Task2Fragment : Fragment() {
         }
 
         observeState()
+    }
+
+    private fun confirmReset() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.confirm_task2_reset_title)
+            .setMessage(R.string.confirm_task2_reset_body)
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.action_reset) { _, _ ->
+                view?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                task2ViewModel.clearTargets()
+            }
+            .show()
     }
 
     private fun observeState() {
