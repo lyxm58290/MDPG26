@@ -29,4 +29,10 @@
         android:label="@string/nav_arena"
         tools:layout="@layout/fragment_arena" />
 
+    <fragment
+        android:id="@+id/task2Fragment"
+        android:name="com.example.mdpg26.ui.task2.Task2Fragment"
+        android:label="@string/task2_title"
+        tools:layout="@layout/fragment_task2" />
+
 </navigation>

@@ -22,6 +22,7 @@ class BluetoothViewModel(application: Application) : AndroidViewModel(applicatio
     val isListening = controller.isListening
     val robotStatus = controller.robotStatus
     val targetDetections = controller.targetDetections
+    val task2Targets = controller.task2Targets
     val robotPositionUpdates = controller.robotPositionUpdates
     val errors = controller.errors
 
@@ -35,6 +36,7 @@ class BluetoothViewModel(application: Application) : AndroidViewModel(applicatio
     fun stopListening() = controller.stopListening()
     fun disconnect() = controller.disconnect()
     fun sendMessage(text: String) = controller.sendMessage(text)
+    fun sendRaw(text: String) = controller.sendRaw(text)
     fun clearMessages() = controller.clearMessages()
 
     override fun onCleared() {

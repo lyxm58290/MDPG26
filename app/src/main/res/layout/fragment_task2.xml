@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Task 2 (Fastest Car) tab. Laid out for landscape on the Galaxy Tab A7 Lite: the toolbar and
+     status strip are hidden on this tab (see MainActivity); the height left after the header,
+     summary line and run buttons is split between the schematic and the message log. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingBottom="12dp"
+    tools:context=".ui.task2.Task2Fragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleMedium"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/task2_title"
+            android:textColor="?attr/colorOnSurface" />
+
+        <!-- Clears both obstacles back to "?" locally; sends nothing. Kept small and up here,
+             away from START, so it can't be hit by mistake mid-run. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReset"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="12dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="14dp"
+            android:text="@string/task2_reset"
+            android:textColor="?attr/colorError"
+            app:cornerRadius="20dp"
+            app:icon="@drawable/ic_refresh"
+            app:iconTint="?attr/colorError"
+            app:strokeColor="?attr/colorError" />
+
+        <!-- Connection indicator. Tapping it while disconnected opens the device picker. -->
+        <LinearLayout
+            android:id="@+id/connectionPill"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_pill_outline"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
+
+            <View
+                android:id="@+id/connectionDot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/shape_status_dot" />
+
+            <TextView
+                android:id="@+id/textConnection"
+                style="@style/TextAppearance.Material3.LabelLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="?attr/colorOnSurface"
+                tools:text="Connected" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <com.example.mdpg26.ui.task2.Task2ArenaView
+        android:id="@+id/task2ArenaView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="4dp"
+        android:layout_weight="5" />
+
+    <TextView
+        android:id="@+id/textTargets"
+        style="@style/TextAppearance.Material3.TitleLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="6dp"
+        android:gravity="center"
+        android:textColor="?attr/colorOnSurface"
+        tools:text="Obstacle 1: LEFT  |  Obstacle 2: ?" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCalibrateStraight"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:text="@string/task2_calib_straight"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            app:backgroundTint="@color/xbox_button_green"
+            app:cornerRadius="20dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStart"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/task2_start"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            app:backgroundTint="?attr/colorPrimary"
+            app:cornerRadius="20dp"
+            app:icon="@drawable/ic_play_arrow"
+            app:iconGravity="textStart"
+            app:iconSize="36dp" />
+    </LinearLayout>
+
+    <!-- Sent/received log: the same shared message list (and bubbles) as the Terminal tab. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_weight="4"
+        android:background="@drawable/bg_message_window">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerMessages"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingVertical="6dp"
+            tools:listitem="@layout/item_message_received" />
+
+        <TextView
+            android:id="@+id/textMessagesEmpty"
+            style="@style/TextAppearance.Material3.BodyMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/terminal_empty_title"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+    </FrameLayout>
+
+</LinearLayout>

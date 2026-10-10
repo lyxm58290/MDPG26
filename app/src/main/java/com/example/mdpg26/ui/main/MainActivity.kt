@@ -59,9 +59,11 @@ class MainActivity : AppCompatActivity() {
 
         // WheelFragment claims the connection status strip's height for its own controller +
         // grid, so the toolbar/status strip (otherwise shown on every tab, C.2) step aside for
-        // it; the bottom nav stays so the tab can still be switched away from.
+        // it; the bottom nav stays so the tab can still be switched away from. Task 2 does the
+        // same for its schematic, and shows its own compact connection indicator instead.
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.topBar.visibility = if (destination.id == R.id.wheelFragment) View.GONE else View.VISIBLE
+            val hideTopBar = destination.id == R.id.wheelFragment || destination.id == R.id.task2Fragment
+            binding.topBar.visibility = if (hideTopBar) View.GONE else View.VISIBLE
         }
     }
 

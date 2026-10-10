@@ -116,6 +116,9 @@ class AndroidBluetoothController(
     private val _targetDetections = MutableSharedFlow<TargetDetection>(extraBufferCapacity = 32)
     override val targetDetections: SharedFlow<TargetDetection> = _targetDetections
 
+    private val _task2Targets = MutableSharedFlow<Task2Target>(extraBufferCapacity = 8)
+    override val task2Targets: SharedFlow<Task2Target> = _task2Targets
+
     private val _robotPositionUpdates = MutableSharedFlow<RobotPositionUpdate>(extraBufferCapacity = 32)
     override val robotPositionUpdates: SharedFlow<RobotPositionUpdate> = _robotPositionUpdates
 
@@ -301,6 +304,19 @@ class AndroidBluetoothController(
 
     override fun sendMessage(text: String) {
         if (text.isBlank()) return
+        write(text)
+    }
+
+    override fun sendRaw(text: String) {
+        if (text.isEmpty()) return
+        // Control characters are escaped so a stray "\n"/"\r" shows up as e.g. [START\n] rather
+        // than silently breaking the log line.
+        Log.i(TAG, "SENDING: [${text.escapeControlChars()}]")
+        write(text)
+    }
+
+    /** Shared by [sendMessage] and [sendRaw]: writes [text]'s UTF-8 bytes exactly as given. */
+    private fun write(text: String) {
         val currentState = _connectionState.value
         if (currentState !is ConnectionUiState.Connected) {
             _errors.tryEmit(context.getString(R.string.error_send_failed))
@@ -590,13 +606,20 @@ class AndroidBluetoothController(
 
     /**
      * Logs an incoming line to the terminal as usual, updates [robotStatus] if it's a status JSON
-     * line, emits a [TargetDetection] if it's a `TARGET,...` line (checklist C.9), and emits a
-     * [RobotPositionUpdate] if it's a `ROBOT,...` line (checklist C.10).
+     * line, emits a [TargetDetection] (Task 1, checklist C.9) or [Task2Target] (Task 2 arrow) if
+     * it's a `TARGET,...` line, and emits a [RobotPositionUpdate] if it's a `ROBOT,...` line
+     * (checklist C.10).
      */
     private fun addReceivedLine(line: String) {
         addMessage(line, MessageDirection.RECEIVED)
         parseStatusUpdate(line)
-        TargetDetection.parse(line)?.let { _targetDetections.tryEmit(it) }
+        when (val target = TargetMessage.parse(line)) {
+            is TargetDetection -> _targetDetections.tryEmit(target)
+            is Task2Target -> _task2Targets.tryEmit(target)
+            null -> if (line.trim().startsWith("TARGET")) {
+                Log.w(TAG, "Ignoring malformed TARGET message: [${line.escapeControlChars()}]")
+            }
+        }
         RobotPositionUpdate.parse(line)?.let { _robotPositionUpdates.tryEmit(it) }
     }
 
@@ -670,6 +693,19 @@ class AndroidBluetoothController(
         const val READ_IDLE_FLUSH_MS = 150L
         const val READ_WATCHDOG_POLL_MS = 50L
         val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    }
+}
+
+/** Makes otherwise-invisible characters visible in Logcat, e.g. "START\n" -> "START\\n". */
+private fun String.escapeControlChars(): String = buildString {
+    for (c in this@escapeControlChars) {
+        when {
+            c == '\n' -> append("\\n")
+            c == '\r' -> append("\\r")
+            c == '\t' -> append("\\t")
+            c.isISOControl() -> append("\\u%04x".format(c.code))
+            else -> append(c)
+        }
     }
 }
 

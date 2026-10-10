@@ -16,4 +16,8 @@
         android:id="@+id/arenaFragment"
         android:icon="@drawable/ic_arena"
         android:title="@string/nav_arena" />
+    <item
+        android:id="@+id/task2Fragment"
+        android:icon="@drawable/ic_task2"
+        android:title="@string/nav_task2" />
 </menu>

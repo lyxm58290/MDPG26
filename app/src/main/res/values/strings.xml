@@ -104,6 +104,19 @@
     <string name="cd_rotate_robot_left">Rotate robot left</string>
     <string name="cd_rotate_robot_right">Rotate robot right</string>
 
+    <!-- Task 2 (Fastest Car) -->
+    <string name="nav_task2">Task 2</string>
+    <string name="task2_title">Task 2 · Fastest Car</string>
+    <string name="task2_carpark_label">CARPARK</string>
+    <string name="task2_calib_straight">calibStraight</string>
+    <string name="task2_start">START</string>
+    <string name="task2_reset">Reset</string>
+    <string name="task2_summary_fmt">Obstacle 1: %1$s  |  Obstacle 2: %2$s</string>
+    <string name="task2_direction_left">LEFT</string>
+    <string name="task2_direction_right">RIGHT</string>
+    <string name="task2_direction_unknown">\?</string>
+    <string name="cd_task2_arena_fmt">Task 2 arena schematic. %1$s</string>
+
     <!-- Target face picker dialog -->
     <string name="dialog_face_title">Target image face</string>
     <string name="dialog_face_subtitle_new_fmt">Which side of the new obstacle at (%1$d, %2$d) has the target image?</string>

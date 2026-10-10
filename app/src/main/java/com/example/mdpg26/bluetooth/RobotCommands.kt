@@ -21,4 +21,8 @@ object RobotCommands {
     const val CALIBRATE_STRAIGHT = "calibStraight"
 
     const val RESET_ARENA = "resetArena"
+
+    /** Task 2 (Fastest Car) run trigger. Must go out via sendRaw — the RPi expects exactly these
+     *  five bytes, no terminator. */
+    const val TASK2_START = "START"
 }

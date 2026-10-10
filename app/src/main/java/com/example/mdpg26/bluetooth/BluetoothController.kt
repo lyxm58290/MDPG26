@@ -18,6 +18,7 @@ interface BluetoothController {
     val isListening: StateFlow<Boolean>
     val robotStatus: StateFlow<RobotStatus?>
     val targetDetections: SharedFlow<TargetDetection>
+    val task2Targets: SharedFlow<Task2Target>
     val robotPositionUpdates: SharedFlow<RobotPositionUpdate>
     val errors: SharedFlow<String>
 
@@ -37,6 +38,13 @@ interface BluetoothController {
     fun stopListening()
     fun disconnect()
     fun sendMessage(text: String)
+
+    /**
+     * Writes exactly [text]'s UTF-8 bytes, with no terminator, now or in future — unlike
+     * [sendMessage], whose framing is free to change. For peers that match the raw payload
+     * byte-for-byte (e.g. Task 2's `START`).
+     */
+    fun sendRaw(text: String)
     fun clearMessages()
     fun release()
 }

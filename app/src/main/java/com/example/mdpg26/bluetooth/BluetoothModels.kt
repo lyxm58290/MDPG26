@@ -37,21 +37,55 @@ enum class RobotStatus(val wireValue: String, val label: String) {
 }
 
 /**
- * RPi image-recognition result for a placed obstacle (checklist C.9), parsed from a
- * `TARGET,<obstacleId>,<targetId>` line — [obstacleId] is the obstacle's own placement id (as
- * used in [com.example.mdpg26.arena.ArenaProtocol]'s `OBSTACLE,...` messages, not whatever is
- * currently displayed on it), and [targetId] is the recognized digit/letter to show instead.
+ * A `TARGET,<obstacleId>,<value>` line from the RPi. Task 1 and Task 2 share the TARGET prefix,
+ * so one parser decides which it is from the third field: LEFT/RIGHT is a Task 2 arrow
+ * ([Task2Target]); anything else is a Task 1 image id ([TargetDetection]).
  */
-data class TargetDetection(val obstacleId: Int, val targetId: String) {
+sealed interface TargetMessage {
     companion object {
-        fun parse(line: String): TargetDetection? {
-            val parts = line.split(",").map { it.trim() }
+        /** Returns null for anything malformed (wrong field count, non-numeric id, empty value)
+         *  or for a LEFT/RIGHT arrow on an obstacle id Task 2 doesn't have. Never throws. */
+        fun parse(line: String): TargetMessage? {
+            val parts = line.trim().split(",").map { it.trim() }
             if (parts.size != 3 || parts[0] != "TARGET") return null
             val obstacleId = parts[1].toIntOrNull() ?: return null
-            val targetId = parts[2]
-            if (targetId.isEmpty()) return null
-            return TargetDetection(obstacleId, targetId)
+            val value = parts[2]
+            if (value.isEmpty()) return null
+            Task2Direction.fromWireValue(value)?.let { direction ->
+                return if (obstacleId in Task2Target.OBSTACLE_IDS) Task2Target(obstacleId, direction) else null
+            }
+            return TargetDetection(obstacleId, value)
         }
+    }
+}
+
+/**
+ * Task 1: RPi image-recognition result for a placed obstacle (checklist C.9), parsed from a
+ * `TARGET,<obstacleId>,<targetId>` line by [TargetMessage.parse] — [obstacleId] is the obstacle's
+ * own placement id (as used in [com.example.mdpg26.arena.ArenaProtocol]'s `OBSTACLE,...`
+ * messages, not whatever is currently displayed on it), and [targetId] is the recognized
+ * digit/letter to show instead.
+ */
+data class TargetDetection(val obstacleId: Int, val targetId: String) : TargetMessage
+
+/** Which way a Task 2 obstacle's arrow points, from the robot's own point of view. */
+enum class Task2Direction {
+    LEFT, RIGHT;
+
+    companion object {
+        fun fromWireValue(value: String): Task2Direction? =
+            entries.firstOrNull { it.name.equals(value.trim(), ignoreCase = true) }
+    }
+}
+
+/**
+ * Task 2 (Fastest Car): the arrow recognized on obstacle [obstacleId]'s carpark-facing side,
+ * parsed from a `TARGET,<obstacleId>,LEFT|RIGHT` line by [TargetMessage.parse]. [obstacleId] is
+ * 1 for the obstacle nearest the carpark and 2 for the far one.
+ */
+data class Task2Target(val obstacleId: Int, val direction: Task2Direction) : TargetMessage {
+    companion object {
+        val OBSTACLE_IDS = 1..2
     }
 }
 
