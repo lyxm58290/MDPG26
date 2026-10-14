@@ -87,6 +87,22 @@
     <color name="arena_drag_ghost_valid">#12B76A</color>
     <color name="arena_drag_ghost_invalid">#F04438</color>
 
+    <!-- Task 2 arena canvas: styled like a real racetrack — asphalt track surface, grass border,
+         red/white curb striping — always rendered this way regardless of the app's light/dark
+         theme, same rationale as the Control page's gamepad body below. -->
+    <color name="track_asphalt">#54575D</color>
+    <color name="track_grass">#4C8C4A</color>
+    <color name="track_curb_red">#D32F2F</color>
+
+    <!-- Task 2 action buttons: a lighter tint of each button's own fill, used both as its glow
+         stroke and as the outline/ambient shadow color for its colored elevation "glow" halo.
+         Button subtitle text (e.g. calibStraight under CALIBRATE) is dimmed black so it reads as
+         secondary to the bold title above it, on CALIBRATE's light-green fill. -->
+    <color name="glow_calib_green">#7BE08A</color>
+    <color name="glow_gyro_blue">#6FD6FF</color>
+    <color name="glow_start_red">#FF8A7A</color>
+    <color name="button_subtitle_text">#8A1B1B1B</color>
+
     <!-- Control page: a single molded gamepad body (Xbox-style), always dark charcoal regardless
          of the app's light/dark theme. Face buttons use the classic Y/X/B/A colorway; only X
          (strafe left) and B (strafe right) do anything — Y, A, both sticks and the view/menu/home

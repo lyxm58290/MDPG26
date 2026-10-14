@@ -108,8 +108,10 @@
     <string name="nav_task2">Task 2</string>
     <string name="task2_title">Task 2 · Fastest Car</string>
     <string name="task2_carpark_label">CARPARK</string>
+    <string name="task2_calib_title">CALIBRATE</string>
     <string name="task2_calib_straight">calibStraight</string>
-    <string name="task2_start">START</string>
+    <string name="task2_gyro_init_calib">GYRO INIT/CALIB</string>
+    <string name="task2_start">START RACE</string>
     <string name="task2_reset">Reset</string>
     <string name="confirm_task2_reset_title">Reset Task 2?</string>
     <string name="confirm_task2_reset_body">This clears the arrows on both obstacles back to \"\?\". Nothing is sent to the robot.</string>
@@ -118,6 +120,8 @@
     <string name="task2_direction_right">RIGHT</string>
     <string name="task2_direction_unknown">\?</string>
     <string name="cd_task2_arena_fmt">Task 2 arena schematic. %1$s</string>
+    <string name="task2_engine_log_title">ENGINE LOG</string>
+    <string name="task2_log_empty">Awaiting launch sequence…\n(No messages yet)</string>
 
     <!-- Target face picker dialog -->
     <string name="dialog_face_title">Target image face</string>

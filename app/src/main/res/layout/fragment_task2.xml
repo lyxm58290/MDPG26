@@ -95,62 +95,127 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="96dp"
+        android:layout_height="112dp"
         android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCalibrateStraight"
-            style="@style/Widget.Material3.Button"
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginEnd="12dp"
             android:layout_weight="1"
-            android:text="@string/task2_calib_straight"
-            android:textColor="@color/white"
-            android:textSize="22sp"
-            app:backgroundTint="@color/xbox_button_green"
-            app:cornerRadius="20dp" />
+            android:background="@drawable/glow_calib"
+            android:padding="8dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStart"
-            style="@style/Widget.Material3.Button"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCalibrateStraight"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/task2_calib_straight"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                app:backgroundTint="@color/xbox_button_green"
+                app:cornerRadius="48dp"
+                app:strokeColor="@color/glow_calib_green"
+                app:strokeWidth="2dp" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:background="@drawable/glow_gyro"
+            android:padding="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGyroInitCalib"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/task2_gyro_init_calib"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                app:backgroundTint="@color/xbox_button_blue"
+                app:cornerRadius="48dp"
+                app:strokeColor="@color/glow_gyro_blue"
+                app:strokeWidth="2dp" />
+        </FrameLayout>
+
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="@string/task2_start"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            app:backgroundTint="?attr/colorPrimary"
-            app:cornerRadius="20dp"
-            app:icon="@drawable/ic_play_arrow"
-            app:iconGravity="textStart"
-            app:iconSize="36dp" />
+            android:background="@drawable/glow_start"
+            android:padding="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStart"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/task2_start"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/xbox_button_red"
+                app:cornerRadius="48dp"
+                app:icon="@drawable/ic_play_arrow"
+                app:iconGravity="textStart"
+                app:iconSize="28dp"
+                app:strokeColor="@color/glow_start_red"
+                app:strokeWidth="2dp" />
+        </FrameLayout>
     </LinearLayout>
 
-    <!-- Sent/received log: the same shared message list (and bubbles) as the Terminal tab. -->
-    <FrameLayout
+    <!-- Sent/received log: the same shared message list (and bubbles) as the Terminal tab, under
+         a dashboard-style "ENGINE LOG" header. -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
         android:layout_weight="4"
-        android:background="@drawable/bg_message_window">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerMessages"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingVertical="6dp"
-            tools:listitem="@layout/item_message_received" />
+        android:background="@drawable/bg_engine_log_frame"
+        android:orientation="vertical"
+        android:padding="4dp">
 
         <TextView
-            android:id="@+id/textMessagesEmpty"
-            style="@style/TextAppearance.Material3.BodyMedium"
-            android:layout_width="wrap_content"
+            style="@style/TextAppearance.Material3.LabelLarge"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="@string/terminal_empty_title"
-            android:textColor="?attr/colorOnSurfaceVariant" />
-    </FrameLayout>
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_engine_log_header"
+            android:gravity="center"
+            android:letterSpacing="0.15"
+            android:paddingVertical="8dp"
+            android:text="@string/task2_engine_log_title"
+            android:textColor="@color/white" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerMessages"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingVertical="6dp"
+                tools:listitem="@layout/item_message_received" />
+
+            <TextView
+                android:id="@+id/textMessagesEmpty"
+                style="@style/TextAppearance.Material3.BodyMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/task2_log_empty"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textStyle="italic" />
+        </FrameLayout>
+    </LinearLayout>
 
 </LinearLayout>

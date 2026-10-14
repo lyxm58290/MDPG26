@@ -1,0 +1,30 @@
+<!-- Soft green glow halo behind the CALIBRATE button: concentric bands fading outward,
+     faking a blurred bloom since Android has no cheap true blur for a plain View background. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#1A7BE08A" />
+            <corners android:radius="48dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="4dp"
+        android:left="4dp"
+        android:right="4dp"
+        android:top="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#337BE08A" />
+            <corners android:radius="46dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="8dp"
+        android:left="8dp"
+        android:right="8dp"
+        android:top="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#4D7BE08A" />
+            <corners android:radius="44dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,6 +1,10 @@
 package com.example.mdpg26.ui.task2
 
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
@@ -66,10 +70,19 @@ class Task2Fragment : Fragment() {
             }
         }
 
+        binding.btnCalibrateStraight.text = twoLineButtonLabel(
+            getString(R.string.task2_calib_title),
+            getString(R.string.task2_calib_straight)
+        )
+
         binding.btnReset.setOnClickListener { confirmReset() }
         binding.btnCalibrateStraight.setOnClickListener {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             bluetoothViewModel.sendMessage(RobotCommands.CALIBRATE_STRAIGHT)
+        }
+        binding.btnGyroInitCalib.setOnClickListener {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            bluetoothViewModel.sendMessage(RobotCommands.GYRO_INIT_CALIB)
         }
         binding.btnStart.setOnClickListener {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -79,6 +92,19 @@ class Task2Fragment : Fragment() {
         }
 
         observeState()
+    }
+
+    /** "CALIBRATE" bold over the smaller, dimmed raw command name, e.g. "calibStraight". */
+    private fun twoLineButtonLabel(title: String, subtitle: String): CharSequence {
+        val text = "$title\n$subtitle"
+        return SpannableString(text).apply {
+            val subtitleStart = title.length + 1
+            setSpan(RelativeSizeSpan(0.55f), subtitleStart, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(
+                ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.button_subtitle_text)),
+                subtitleStart, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
     }
 
     private fun confirmReset() {
@@ -145,11 +171,13 @@ class Task2Fragment : Fragment() {
         binding.textConnection.text = label
 
         // Same convention as the Control tab: commands can't go anywhere while disconnected, so
-        // the buttons say so rather than failing with a snackbar.
+        // the buttons say so rather than failing with a snackbar. Alpha is set on each button's
+        // glow-halo FrameLayout wrapper (its parent), not the button itself, so the glow dims
+        // along with the button instead of staying lit behind a faded one.
         val connected = state is ConnectionUiState.Connected
-        listOf(binding.btnCalibrateStraight, binding.btnStart).forEach {
+        listOf(binding.btnCalibrateStraight, binding.btnGyroInitCalib, binding.btnStart).forEach {
             it.isEnabled = connected
-            it.alpha = if (connected) 1f else 0.25f
+            (it.parent as View).alpha = if (connected) 1f else 0.25f
         }
     }
 

@@ -1,0 +1,29 @@
+<!-- Soft blue glow halo behind the GYRO INIT/CALIB button — see glow_calib.xml. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#1A6FD6FF" />
+            <corners android:radius="48dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="4dp"
+        android:left="4dp"
+        android:right="4dp"
+        android:top="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#336FD6FF" />
+            <corners android:radius="46dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="8dp"
+        android:left="8dp"
+        android:right="8dp"
+        android:top="8dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#4D6FD6FF" />
+            <corners android:radius="44dp" />
+        </shape>
+    </item>
+</layer-list>
