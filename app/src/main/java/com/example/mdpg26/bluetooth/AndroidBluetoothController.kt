@@ -123,6 +123,13 @@ class AndroidBluetoothController(
     private val _task2Targets = MutableSharedFlow<Task2Target>(extraBufferCapacity = 8)
     override val task2Targets: SharedFlow<Task2Target> = _task2Targets
 
+    private val _task2Done = MutableSharedFlow<Long>(extraBufferCapacity = 8)
+    override val task2Done: SharedFlow<Long> = _task2Done
+
+    // Log timestamp of the last START received back from the RPi, for timing the run until
+    // DONE,TASK2 (see task2Done). Only touched from the read loop.
+    private var task2StartedAt: Long? = null
+
     private val _robotPositionUpdates = MutableSharedFlow<RobotPositionUpdate>(extraBufferCapacity = 32)
     override val robotPositionUpdates: SharedFlow<RobotPositionUpdate> = _robotPositionUpdates
 
@@ -416,6 +423,10 @@ class AndroidBluetoothController(
         }
     }
 
+    override fun logLocal(text: String) {
+        addSystemMessage(text)
+    }
+
     override fun clearMessages() {
         _messages.value = emptyList()
     }
@@ -670,8 +681,10 @@ class AndroidBluetoothController(
         socket = null
     }
 
-    private fun addMessage(text: String, direction: MessageDirection) {
-        _messages.update { it + TerminalMessage(text, direction) }
+    private fun addMessage(text: String, direction: MessageDirection): TerminalMessage {
+        val message = TerminalMessage(text, direction)
+        _messages.update { it + message }
+        return message
     }
 
     private fun addSystemMessage(text: String) {
@@ -682,10 +695,11 @@ class AndroidBluetoothController(
      * Logs an incoming line to the terminal as usual, updates [robotStatus] if it's a status JSON
      * line, emits a [TargetDetection] (Task 1, checklist C.9) or [Task2Target] (Task 2 arrow) if
      * it's a `TARGET,...` line, and emits a [RobotPositionUpdate] if it's a `ROBOT,...` line
-     * (checklist C.10).
+     * (checklist C.10). On `DONE,TASK2`, emits the run time since the last START received from
+     * the RPi to [task2Done].
      */
     private fun addReceivedLine(line: String) {
-        addMessage(line, MessageDirection.RECEIVED)
+        val received = addMessage(line, MessageDirection.RECEIVED)
         receivedLines.tryEmit(line)
         parseStatusUpdate(line)
         when (val target = TargetMessage.parse(line)) {
@@ -696,6 +710,14 @@ class AndroidBluetoothController(
             }
         }
         RobotPositionUpdate.parse(line)?.let { _robotPositionUpdates.tryEmit(it) }
+        if (line.trim().equals(RobotCommands.TASK2_START, ignoreCase = true)) {
+            task2StartedAt = received.timestamp
+        } else if (line.trim().equals(RobotCommands.TASK2_DONE, ignoreCase = true)) {
+            task2StartedAt?.let { startedAt ->
+                task2StartedAt = null
+                _task2Done.tryEmit(received.timestamp - startedAt)
+            }
+        }
     }
 
     private fun parseStatusUpdate(line: String) {

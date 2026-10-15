@@ -58,6 +58,7 @@ class Task2Fragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         task2ViewModel.bindTargets(bluetoothViewModel.task2Targets)
+        task2ViewModel.bindDone(bluetoothViewModel.task2Done, bluetoothViewModel::logLocal)
 
         binding.recyclerMessages.layoutManager = LinearLayoutManager(requireContext()).apply {
             stackFromEnd = true

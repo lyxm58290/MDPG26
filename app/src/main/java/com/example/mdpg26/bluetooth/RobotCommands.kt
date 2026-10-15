@@ -26,4 +26,7 @@ object RobotCommands {
     /** Task 2 (Fastest Car) run trigger. Must go out via sendRaw — the RPi expects exactly these
      *  five bytes, no terminator. */
     const val TASK2_START = "START"
+
+    /** Sent BY the RPi (not the app) when the Task 2 run finishes; the app times START -> this. */
+    const val TASK2_DONE = "DONE,TASK2"
 }

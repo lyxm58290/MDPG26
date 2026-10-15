@@ -37,4 +37,10 @@ class Task2ViewModelTest {
         vm.clearTargets()
         assertEquals(Task2State(), vm.state.value)
     }
+
+    @Test
+    fun formatRunTime_showsSecondsToTheMillisecond() {
+        assertEquals("Task 2 time: 12.345 s (START -> DONE,TASK2)", formatRunTime(12_345))
+        assertEquals("Task 2 time: 0.050 s (START -> DONE,TASK2)", formatRunTime(50))
+    }
 }

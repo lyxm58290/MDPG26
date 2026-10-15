@@ -19,6 +19,14 @@ interface BluetoothController {
     val robotStatus: StateFlow<RobotStatus?>
     val targetDetections: SharedFlow<TargetDetection>
     val task2Targets: SharedFlow<Task2Target>
+
+    /**
+     * Emits the Task 2 run time in ms when the RPi reports `DONE,TASK2`: the gap between the
+     * logged timestamps of the last `START` received back from the RPi and that `DONE,TASK2`
+     * line, i.e. the same two timestamps shown in the message log. Nothing is emitted for a DONE
+     * with no incoming START before it.
+     */
+    val task2Done: SharedFlow<Long>
     val robotPositionUpdates: SharedFlow<RobotPositionUpdate>
     val errors: SharedFlow<String>
 
@@ -55,6 +63,9 @@ interface BluetoothController {
      * already in progress.
      */
     fun sendSequence(messages: List<String>)
+
+    /** Adds [text] to the message log as a SYSTEM line. Local only; nothing is sent. */
+    fun logLocal(text: String)
     fun clearMessages()
     fun release()
 }

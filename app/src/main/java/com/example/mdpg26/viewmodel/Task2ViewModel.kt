@@ -28,6 +28,7 @@ class Task2ViewModel : ViewModel() {
     val state: StateFlow<Task2State> = _state.asStateFlow()
 
     private var targetsJob: Job? = null
+    private var doneJob: Job? = null
 
     /**
      * Starts collecting [targets] (the shared [BluetoothViewModel.task2Targets]) for the lifetime
@@ -37,6 +38,16 @@ class Task2ViewModel : ViewModel() {
     fun bindTargets(targets: Flow<Task2Target>) {
         if (targetsJob != null) return
         targetsJob = viewModelScope.launch { targets.collect(::applyTarget) }
+    }
+
+    /**
+     * Starts collecting [runTimes] (the shared [BluetoothViewModel.task2Done], in ms) for the
+     * lifetime of this ViewModel, passing each run's log line to [log]. Same subscribe-once rule
+     * as [bindTargets].
+     */
+    fun bindDone(runTimes: Flow<Long>, log: (String) -> Unit) {
+        if (doneJob != null) return
+        doneJob = viewModelScope.launch { runTimes.collect { log(formatRunTime(it)) } }
     }
 
     fun applyTarget(target: Task2Target) {
@@ -55,3 +66,7 @@ class Task2ViewModel : ViewModel() {
         _state.value = Task2State()
     }
 }
+
+/** e.g. 12345 -> "Task 2 time: 12.345 s (START -> DONE,TASK2)". */
+internal fun formatRunTime(elapsedMs: Long): String =
+    "Task 2 time: %d.%03d s (START -> DONE,TASK2)".format(elapsedMs / 1000, elapsedMs % 1000)
