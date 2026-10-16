@@ -30,21 +30,17 @@
             android:textColor="?attr/colorOnSurface" />
 
         <!-- F1-style lap timer: counts up from the RPi's START echo, freezes (gold flash) on
-             DONE,TASK2. Up here in the header so it never covers the track. The glow view behind
-             the plate is only visible during/after the "lap complete" flash. -->
+             DONE,TASK2. Up here in the header so it never covers the track. The gold glow is the
+             container's background (alpha 0 until the "lap complete" flash) rather than a
+             match_parent child view, which would stretch this wrap_content frame across the
+             whole header and push Reset and the connection pill off screen. -->
         <FrameLayout
             android:id="@+id/lapTimerContainer"
             android:layout_width="wrap_content"
             android:layout_height="56dp"
             android:layout_marginEnd="12dp"
+            android:background="@drawable/glow_lap_gold"
             android:contentDescription="@string/cd_task2_lap_timer">
-
-            <View
-                android:id="@+id/lapTimerGlow"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:alpha="0"
-                android:background="@drawable/glow_lap_gold" />
 
             <LinearLayout
                 android:layout_width="wrap_content"

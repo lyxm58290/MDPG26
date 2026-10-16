@@ -85,6 +85,9 @@ class Task2Fragment : Fragment() {
             }
         }
 
+        // Mutated so fading the glow doesn't touch the shared drawable; hidden until a lap ends.
+        binding.lapTimerContainer.background.mutate().alpha = 0
+
         binding.btnCalibrateStraight.text = twoLineButtonLabel(
             getString(R.string.task2_calib_title),
             getString(R.string.task2_calib_straight)
@@ -210,17 +213,17 @@ class Task2Fragment : Fragment() {
             if (previous != null && previous !is LapTimerState.Finished) {
                 pulseLapTimer()
             } else {
-                binding.lapTimerGlow.alpha = LAP_GLOW_RESTING_ALPHA
+                binding.lapTimerContainer.background.alpha = LAP_GLOW_RESTING_ALPHA
             }
         } else {
-            binding.lapTimerGlow.alpha = 0f
+            binding.lapTimerContainer.background.alpha = 0
         }
     }
 
     /** "Lap complete": the gold halo flashes twice and the plate pops, then a faint glow stays. */
     private fun pulseLapTimer() {
-        val glow = ObjectAnimator.ofFloat(
-            binding.lapTimerGlow, View.ALPHA, 0f, 1f, 0.2f, 1f, LAP_GLOW_RESTING_ALPHA
+        val glow = ObjectAnimator.ofInt(
+            binding.lapTimerContainer.background, "alpha", 0, 255, 51, 255, LAP_GLOW_RESTING_ALPHA
         ).setDuration(1200)
         val pop = ObjectAnimator.ofPropertyValuesHolder(
             binding.lapTimerContainer,
@@ -278,4 +281,4 @@ class Task2Fragment : Fragment() {
 }
 
 private const val LAP_TICK_MS = 33L
-private const val LAP_GLOW_RESTING_ALPHA = 0.35f
+private const val LAP_GLOW_RESTING_ALPHA = 89 // ~35% of 255
