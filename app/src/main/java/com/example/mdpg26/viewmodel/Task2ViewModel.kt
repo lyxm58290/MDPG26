@@ -18,6 +18,17 @@ data class Task2State(
     val obstacle2: Task2Direction? = null
 )
 
+/** The on-screen Task 2 lap timer, driven by the RPi's START echo and DONE,TASK2. */
+sealed interface LapTimerState {
+    data object Idle : LapTimerState
+
+    /** Counting up live from [startedAt], the START echo's log timestamp (epoch ms). */
+    data class Running(val startedAt: Long) : LapTimerState
+
+    /** Frozen on the run time reported with DONE,TASK2 — the same value as the log line. */
+    data class Finished(val durationMs: Long) : LapTimerState
+}
+
 /**
  * Owns the Task 2 (Fastest Car) screen's state. Activity-scoped (like [ArenaViewModel]) so it
  * survives rotation and a trip back to the main screen mid-run.
@@ -27,7 +38,11 @@ class Task2ViewModel : ViewModel() {
     private val _state = MutableStateFlow(Task2State())
     val state: StateFlow<Task2State> = _state.asStateFlow()
 
+    private val _lapTimer = MutableStateFlow<LapTimerState>(LapTimerState.Idle)
+    val lapTimer: StateFlow<LapTimerState> = _lapTimer.asStateFlow()
+
     private var targetsJob: Job? = null
+    private var startJob: Job? = null
     private var doneJob: Job? = null
 
     /**
@@ -41,13 +56,40 @@ class Task2ViewModel : ViewModel() {
     }
 
     /**
+     * Starts collecting [starts] (the shared [BluetoothViewModel.task2Started]) for the lifetime
+     * of this ViewModel, starting the lap timer on each. Same subscribe-once rule as [bindTargets].
+     */
+    fun bindStart(starts: Flow<Long>) {
+        if (startJob != null) return
+        startJob = viewModelScope.launch { starts.collect(::onRunStarted) }
+    }
+
+    /**
      * Starts collecting [runTimes] (the shared [BluetoothViewModel.task2Done], in ms) for the
-     * lifetime of this ViewModel, passing each run's log line to [log]. Same subscribe-once rule
-     * as [bindTargets].
+     * lifetime of this ViewModel, stopping the lap timer on that run time and passing each run's
+     * log line to [log]. Same subscribe-once rule as [bindTargets].
      */
     fun bindDone(runTimes: Flow<Long>, log: (String) -> Unit) {
         if (doneJob != null) return
-        doneJob = viewModelScope.launch { runTimes.collect { log(formatRunTime(it)) } }
+        doneJob = viewModelScope.launch {
+            runTimes.collect {
+                onRunFinished(it)
+                log(formatRunTime(it))
+            }
+        }
+    }
+
+    fun onRunStarted(startedAt: Long) {
+        _lapTimer.value = LapTimerState.Running(startedAt)
+    }
+
+    fun onRunFinished(durationMs: Long) {
+        _lapTimer.value = LapTimerState.Finished(durationMs)
+    }
+
+    /** Back to 0:00.000 — from the Reset button. Local only. */
+    fun resetLapTimer() {
+        _lapTimer.value = LapTimerState.Idle
     }
 
     fun applyTarget(target: Task2Target) {
@@ -70,3 +112,9 @@ class Task2ViewModel : ViewModel() {
 /** e.g. 12345 -> "Task 2 time: 12.345 s (START -> DONE,TASK2)". */
 internal fun formatRunTime(elapsedMs: Long): String =
     "Task 2 time: %d.%03d s (START -> DONE,TASK2)".format(elapsedMs / 1000, elapsedMs % 1000)
+
+/** Lap-timer digits, M:SS.mmm, e.g. 72345 -> "1:12.345". */
+internal fun formatLapTime(elapsedMs: Long): String {
+    val ms = elapsedMs.coerceAtLeast(0)
+    return "%d:%02d.%03d".format(ms / 60_000, ms / 1000 % 60, ms % 1000)
+}

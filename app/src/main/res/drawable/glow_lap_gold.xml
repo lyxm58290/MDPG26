@@ -1,0 +1,30 @@
+<!-- Gold glow halo behind the lap timer, flashed when DONE,TASK2 freezes the time ("lap
+     complete") — same stacked-translucent-layer construction as glow_start.xml. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#33F5C400" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#59F5C400" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="4dp"
+        android:left="4dp"
+        android:right="4dp"
+        android:top="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#99F5C400" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+</layer-list>

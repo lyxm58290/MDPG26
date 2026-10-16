@@ -123,6 +123,9 @@ class AndroidBluetoothController(
     private val _task2Targets = MutableSharedFlow<Task2Target>(extraBufferCapacity = 8)
     override val task2Targets: SharedFlow<Task2Target> = _task2Targets
 
+    private val _task2Started = MutableSharedFlow<Long>(extraBufferCapacity = 8)
+    override val task2Started: SharedFlow<Long> = _task2Started
+
     private val _task2Done = MutableSharedFlow<Long>(extraBufferCapacity = 8)
     override val task2Done: SharedFlow<Long> = _task2Done
 
@@ -695,7 +698,7 @@ class AndroidBluetoothController(
      * Logs an incoming line to the terminal as usual, updates [robotStatus] if it's a status JSON
      * line, emits a [TargetDetection] (Task 1, checklist C.9) or [Task2Target] (Task 2 arrow) if
      * it's a `TARGET,...` line, and emits a [RobotPositionUpdate] if it's a `ROBOT,...` line
-     * (checklist C.10). On `DONE,TASK2`, emits the run time since the last START received from
+     * (checklist C.10). On `START`, emits its timestamp to [task2Started]; on `DONE,TASK2`, emits the run time since the last START received from
      * the RPi to [task2Done].
      */
     private fun addReceivedLine(line: String) {
@@ -712,6 +715,7 @@ class AndroidBluetoothController(
         RobotPositionUpdate.parse(line)?.let { _robotPositionUpdates.tryEmit(it) }
         if (line.trim().equals(RobotCommands.TASK2_START, ignoreCase = true)) {
             task2StartedAt = received.timestamp
+            _task2Started.tryEmit(received.timestamp)
         } else if (line.trim().equals(RobotCommands.TASK2_DONE, ignoreCase = true)) {
             task2StartedAt?.let { startedAt ->
                 task2StartedAt = null

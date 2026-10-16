@@ -21,6 +21,12 @@ interface BluetoothController {
     val task2Targets: SharedFlow<Task2Target>
 
     /**
+     * Emits the logged timestamp (epoch ms) of each `START` received back from the RPi — the
+     * same start time [task2Done]'s run time is measured from.
+     */
+    val task2Started: SharedFlow<Long>
+
+    /**
      * Emits the Task 2 run time in ms when the RPi reports `DONE,TASK2`: the gap between the
      * logged timestamps of the last `START` received back from the RPi and that `DONE,TASK2`
      * line, i.e. the same two timestamps shown in the message log. Nothing is emitted for a DONE

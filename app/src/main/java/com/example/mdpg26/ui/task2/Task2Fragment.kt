@@ -1,5 +1,8 @@
 package com.example.mdpg26.ui.task2
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
@@ -24,9 +27,13 @@ import com.example.mdpg26.databinding.FragmentTask2Binding
 import com.example.mdpg26.ui.devicepicker.DeviceListBottomSheet
 import com.example.mdpg26.ui.terminal.MessageAdapter
 import com.example.mdpg26.viewmodel.BluetoothViewModel
+import com.example.mdpg26.viewmodel.LapTimerState
 import com.example.mdpg26.viewmodel.Task2State
 import com.example.mdpg26.viewmodel.Task2ViewModel
+import com.example.mdpg26.viewmodel.formatLapTime
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -45,6 +52,12 @@ class Task2Fragment : Fragment() {
     private val task2ViewModel: Task2ViewModel by activityViewModels()
     private val messageAdapter = MessageAdapter()
 
+    // Last lap-timer state drawn on this view, so the "lap complete" flash plays only on a live
+    // Running -> Finished change, not when a recreated view (rotation, tab switch) first shows
+    // an already-finished time.
+    private var shownLapTimer: LapTimerState? = null
+    private var lapPulse: AnimatorSet? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -58,6 +71,7 @@ class Task2Fragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         task2ViewModel.bindTargets(bluetoothViewModel.task2Targets)
+        task2ViewModel.bindStart(bluetoothViewModel.task2Started)
         task2ViewModel.bindDone(bluetoothViewModel.task2Done, bluetoothViewModel::logLocal)
 
         binding.recyclerMessages.layoutManager = LinearLayoutManager(requireContext()).apply {
@@ -116,6 +130,7 @@ class Task2Fragment : Fragment() {
             .setPositiveButton(R.string.action_reset) { _, _ ->
                 view?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 task2ViewModel.clearTargets()
+                task2ViewModel.resetLapTimer()
             }
             .show()
     }
@@ -133,6 +148,20 @@ class Task2Fragment : Fragment() {
                     }
                 }
                 launch {
+                    // collectLatest cancels the tick loop as soon as the state changes; the
+                    // repeatOnLifecycle scope cancels it whenever the tab isn't visible.
+                    task2ViewModel.lapTimer.collectLatest { state ->
+                        renderLapTimer(state)
+                        if (state is LapTimerState.Running) {
+                            while (true) {
+                                binding.textLapTime.text =
+                                    formatLapTime(System.currentTimeMillis() - state.startedAt)
+                                delay(LAP_TICK_MS)
+                            }
+                        }
+                    }
+                }
+                launch {
                     bluetoothViewModel.connectionState.collect { renderConnection(it) }
                 }
                 launch {
@@ -146,6 +175,53 @@ class Task2Fragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun renderLapTimer(state: LapTimerState) {
+        val colorRes = when (state) {
+            LapTimerState.Idle -> R.color.lap_timer_idle
+            is LapTimerState.Running -> R.color.lap_timer_running
+            is LapTimerState.Finished -> R.color.lap_timer_finished
+        }
+        binding.textLapTime.setTextColor(ContextCompat.getColor(requireContext(), colorRes))
+        when (state) {
+            LapTimerState.Idle -> binding.textLapTime.setText(R.string.task2_lap_idle)
+            is LapTimerState.Running -> Unit // ticked by observeState()
+            is LapTimerState.Finished -> binding.textLapTime.text = formatLapTime(state.durationMs)
+        }
+
+        val previous = shownLapTimer
+        shownLapTimer = state
+        lapPulse?.cancel()
+        lapPulse = null
+        binding.lapTimerContainer.scaleX = 1f
+        binding.lapTimerContainer.scaleY = 1f
+        if (state is LapTimerState.Finished) {
+            if (previous != null && previous !is LapTimerState.Finished) {
+                pulseLapTimer()
+            } else {
+                binding.lapTimerGlow.alpha = LAP_GLOW_RESTING_ALPHA
+            }
+        } else {
+            binding.lapTimerGlow.alpha = 0f
+        }
+    }
+
+    /** "Lap complete": the gold halo flashes twice and the plate pops, then a faint glow stays. */
+    private fun pulseLapTimer() {
+        val glow = ObjectAnimator.ofFloat(
+            binding.lapTimerGlow, View.ALPHA, 0f, 1f, 0.2f, 1f, LAP_GLOW_RESTING_ALPHA
+        ).setDuration(1200)
+        val pop = ObjectAnimator.ofPropertyValuesHolder(
+            binding.lapTimerContainer,
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.08f, 1f, 1.05f, 1f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.08f, 1f, 1.05f, 1f)
+        ).setDuration(800)
+        lapPulse = AnimatorSet().apply {
+            playTogether(glow, pop)
+            start()
+        }
+        view?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     }
 
     private fun summaryText(state: Task2State): String =
@@ -184,6 +260,12 @@ class Task2Fragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        lapPulse?.cancel()
+        lapPulse = null
+        shownLapTimer = null
         _binding = null
     }
 }
+
+private const val LAP_TICK_MS = 33L
+private const val LAP_GLOW_RESTING_ALPHA = 0.35f

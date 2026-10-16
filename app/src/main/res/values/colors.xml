@@ -103,6 +103,14 @@
     <color name="glow_start_red">#FF8A7A</color>
     <color name="button_subtitle_text">#8A1B1B1B</color>
 
+    <!-- Task 2 lap timer (always dark, like the track): dim grey 0:00.000 while idle, white
+         digits while running, gold once DONE,TASK2 freezes the time. -->
+    <color name="lap_timer_face">#0E0E11</color>
+    <color name="lap_timer_face_top">#26262C</color>
+    <color name="lap_timer_idle">#6B7078</color>
+    <color name="lap_timer_running">#FFFFFF</color>
+    <color name="lap_timer_finished">#F5C400</color>
+
     <!-- Control page: a single molded gamepad body (Xbox-style), always dark charcoal regardless
          of the app's light/dark theme. Face buttons use the classic Y/X/B/A colorway; only X
          (strafe left) and B (strafe right) do anything — Y, A, both sticks and the view/menu/home

@@ -15,7 +15,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="60dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -29,7 +29,58 @@
             android:text="@string/task2_title"
             android:textColor="?attr/colorOnSurface" />
 
-        <!-- Clears both obstacles back to "?" locally; sends nothing. Kept small and up here,
+        <!-- F1-style lap timer: counts up from the RPi's START echo, freezes (gold flash) on
+             DONE,TASK2. Up here in the header so it never covers the track. The glow view behind
+             the plate is only visible during/after the "lap complete" flash. -->
+        <FrameLayout
+            android:id="@+id/lapTimerContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="56dp"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="@string/cd_task2_lap_timer">
+
+            <View
+                android:id="@+id/lapTimerGlow"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:alpha="0"
+                android:background="@drawable/glow_lap_gold" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_lap_timer_frame"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:letterSpacing="0.15"
+                    android:text="@string/task2_lap_label"
+                    android:textColor="@color/lap_timer_finished"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <!-- Monospace so the width doesn't jitter as the digits tick. -->
+                <TextView
+                    android:id="@+id/textLapTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/task2_lap_idle"
+                    android:textColor="@color/lap_timer_idle"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Clears both obstacles back to "?" and the lap timer locally; sends nothing. Kept small and up here,
              away from START, so it can't be hit by mistake mid-run. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnReset"

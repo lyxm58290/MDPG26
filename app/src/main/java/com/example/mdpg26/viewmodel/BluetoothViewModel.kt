@@ -23,6 +23,7 @@ class BluetoothViewModel(application: Application) : AndroidViewModel(applicatio
     val robotStatus = controller.robotStatus
     val targetDetections = controller.targetDetections
     val task2Targets = controller.task2Targets
+    val task2Started = controller.task2Started
     val task2Done = controller.task2Done
     val robotPositionUpdates = controller.robotPositionUpdates
     val errors = controller.errors

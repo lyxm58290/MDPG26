@@ -115,12 +115,15 @@
     <string name="task2_start">START RACE</string>
     <string name="task2_reset">Reset</string>
     <string name="confirm_task2_reset_title">Reset Task 2?</string>
-    <string name="confirm_task2_reset_body">This clears the arrows on both obstacles back to \"\?\". Nothing is sent to the robot.</string>
+    <string name="confirm_task2_reset_body">This clears the arrows on both obstacles back to \"\?\" and resets the lap timer. Nothing is sent to the robot.</string>
     <string name="task2_summary_fmt">Obstacle 1: %1$s  |  Obstacle 2: %2$s</string>
     <string name="task2_direction_left">LEFT</string>
     <string name="task2_direction_right">RIGHT</string>
     <string name="task2_direction_unknown">\?</string>
     <string name="cd_task2_arena_fmt">Task 2 arena schematic. %1$s</string>
+    <string name="task2_lap_label">LAP</string>
+    <string name="task2_lap_idle">0:00.000</string>
+    <string name="cd_task2_lap_timer">Task 2 lap timer</string>
     <string name="task2_engine_log_title">ENGINE LOG</string>
     <string name="task2_log_empty">Awaiting launch sequence…\n(No messages yet)</string>
 
