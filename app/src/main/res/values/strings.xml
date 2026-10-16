@@ -95,6 +95,7 @@
     <string name="cmd_calibrate_straight_short">Calb</string>
     <string name="cmd_reset_arena_short">Rst</string>
     <string name="cd_wheel_bluetooth">Bluetooth connection</string>
+    <string name="cd_wheel_bluetooth_fmt">Bluetooth connection: %1$s</string>
     <string name="wheel_screen_empty">No messages yet</string>
 
     <!-- Arena tab (C.5-C.7) -->
@@ -111,7 +112,7 @@
 
     <!-- Task 2 (Fastest Car) -->
     <string name="nav_task2">Task 2</string>
-    <string name="task2_title">Task 2 · Fastest Car</string>
+    <string name="task2_title">Task 2</string>
     <string name="task2_carpark_label">CARPARK</string>
     <string name="task2_calib_title">CALIBRATE</string>
     <string name="task2_calib_straight">calibStraight</string>

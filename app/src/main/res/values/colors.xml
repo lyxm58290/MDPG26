@@ -18,9 +18,9 @@
     <color name="md_light_onTertiary">#3A2E00</color>
     <color name="md_light_tertiaryContainer">#FFF0AD</color>
     <color name="md_light_onTertiaryContainer">#241A00</color>
-    <color name="md_light_background">#F4F4F7</color>
+    <color name="md_light_background">#E8E9ED</color>
     <color name="md_light_onBackground">#1B1B1F</color>
-    <color name="md_light_surface">#FFFFFF</color>
+    <color name="md_light_surface">#ECEDF1</color>
     <color name="md_light_onSurface">#1B1B1F</color>
     <color name="md_light_surfaceVariant">#E4E2E6</color>
     <color name="md_light_onSurfaceVariant">#46464A</color>
@@ -82,7 +82,7 @@
     <color name="arena_target_detected_text">#12B76A</color>
     <!-- Obstacle fill once its target image is recognised (C.9); lighter in values-night so it
          still stands out against the dark arena grid. White ID text on top in both. -->
-    <color name="arena_obstacle_recognised_fill">#0B5D3B</color>
+    <color name="arena_obstacle_recognised_fill">#107A4B</color>
     <color name="arena_target_face">#F5C400</color>
     <color name="arena_robot_fill">#0AB9E6</color>
     <color name="arena_robot_footprint">#400AB9E6</color>
@@ -104,6 +104,9 @@
     <color name="glow_calib_green">#7BE08A</color>
     <color name="glow_gyro_blue">#6FD6FF</color>
     <color name="glow_start_red">#FF8A7A</color>
+    <color name="glow_gold">#FFE27A</color>
+    <!-- Mid-tone of the chrome bezel gradient, for thin strokes that echo it. -->
+    <color name="chrome_stroke">#8A9099</color>
     <color name="button_subtitle_text">#8A1B1B1B</color>
 
     <!-- Task 2 lap timer (always dark, like the track): dim grey 0:00.000 while idle, white

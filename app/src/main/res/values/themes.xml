@@ -34,6 +34,14 @@
 
     <style name="Theme.MDPG26" parent="Base.Theme.MDPG26" />
 
+    <!-- Bottom nav active pill: controller charcoal, in both themes. 28dp tall (not
+         the default 32dp) so the short 52dp bar doesn't clip its rounded top and bottom. -->
+    <style name="Widget.MDPG26.NavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/controller_dpad</item>
+        <item name="android:height">28dp</item>
+        <item name="android:width">60dp</item>
+    </style>
+
     <style name="Widget.MDPG26.StatusStrip" parent="Widget.Material3.CardView.Elevated">
         <item name="cardBackgroundColor">@color/md_light_surface</item>
         <item name="cardCornerRadius">0dp</item>

@@ -165,12 +165,23 @@
         app:defaultNavHost="true"
         app:navGraph="@navigation/nav_graph" />
 
+    <!-- Flat nav bar (no elevation, so M3 doesn't tint it with the red primary) on the plain
+         surface colour, separated by a hairline like the status strip's. -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorOutlineVariant" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="52dp"
+        app:backgroundTint="?attr/colorSurface"
+        app:elevation="0dp"
+        app:itemActiveIndicatorStyle="@style/Widget.MDPG26.NavIndicator"
         app:itemIconSize="20dp"
+        app:itemIconTint="@color/selector_nav_icon"
         app:labelVisibilityMode="unlabeled"
         app:menu="@menu/bottom_nav_menu" />
 

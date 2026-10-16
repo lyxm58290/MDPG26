@@ -1,0 +1,24 @@
+<!-- Wheel dashboard "screen", dark theme: near-black face inside a thin chrome bezel, echoing the Task 2
+     ENGINE LOG frame and lap-timer plate. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:centerColor="#8A9099"
+                android:endColor="#B7BCC3"
+                android:startColor="#DEE1E5" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/joystick_base" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,7 @@
+<!-- Message input pill inside the Wheel tab's dashboard screen: a raised controller-grey strip
+     on the screen's near-black, so the input reads as a field rather than loose text. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/controller_dpad" />
+    <corners android:radius="14dp" />
+</shape>

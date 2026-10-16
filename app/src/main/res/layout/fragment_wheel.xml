@@ -26,11 +26,13 @@
     <FrameLayout
         android:id="@+id/wheelContainer"
         android:layout_width="match_parent"
-        android:layout_height="230dp"
+        android:layout_height="256dp"
         android:layout_marginStart="4dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="4dp"
-        android:layout_marginBottom="4dp">
+        android:layout_marginBottom="4dp"
+        android:background="@drawable/bg_wheel_chrome_frame"
+        android:padding="3dp">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -48,19 +50,19 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnBluetooth"
                     style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
                     android:contentDescription="@string/cd_wheel_bluetooth"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
                     android:insetRight="0dp"
                     android:insetBottom="0dp"
                     app:backgroundTint="@color/controller_dpad"
-                    app:cornerRadius="15dp"
+                    app:cornerRadius="21dp"
                     app:icon="@drawable/ic_bluetooth"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp"
-                    app:iconSize="14dp"
+                    app:iconSize="22dp"
                     app:iconTint="@color/white"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -244,7 +246,7 @@
                     android:id="@+id/screenPanel"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_marginTop="38dp"
+                    android:layout_marginTop="6dp"
                     android:layout_marginBottom="6dp"
                     android:background="@drawable/bg_wheel_screen"
                     android:orientation="vertical"
@@ -281,10 +283,13 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_height="36dp"
+                        android:layout_marginTop="4dp"
+                        android:background="@drawable/bg_wheel_input"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="4dp">
 
                         <EditText
                             android:id="@+id/editMessage"
@@ -296,19 +301,19 @@
                             android:imeOptions="actionSend"
                             android:inputType="text"
                             android:maxLines="1"
-                            android:paddingHorizontal="4dp"
-                            android:paddingVertical="2dp"
+                            android:paddingHorizontal="0dp"
+                            android:paddingVertical="4dp"
                             android:textColor="@color/white"
                             android:textColorHint="@color/joystick_cap_highlight"
-                            android:textSize="9sp" />
+                            android:textSize="13sp" />
 
                         <ImageButton
                             android:id="@+id/btnSend"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="@string/cd_send"
-                            android:padding="3dp"
+                            android:padding="5dp"
                             android:src="@drawable/ic_send"
                             app:tint="@color/white" />
                     </LinearLayout>
@@ -344,8 +349,10 @@
                         android:text="@string/cmd_begin_explore_short"
                         android:textColor="@color/white"
                         android:textSize="9sp"
-                        app:backgroundTint="?attr/colorPrimary"
-                        app:cornerRadius="19dp" />
+                        app:backgroundTint="@color/xbox_button_red"
+                        app:cornerRadius="19dp"
+                        app:strokeColor="@color/glow_start_red"
+                        app:strokeWidth="2dp" />
 
                     <Space
                         android:layout_width="12dp"
@@ -366,10 +373,12 @@
                         android:paddingHorizontal="0dp"
                         android:paddingVertical="0dp"
                         android:text="@string/cmd_begin_fastest_short"
-                        android:textColor="?attr/colorOnTertiary"
+                        android:textColor="@color/black"
                         android:textSize="9sp"
-                        app:backgroundTint="?attr/colorTertiary"
-                        app:cornerRadius="19dp" />
+                        app:backgroundTint="@color/xbox_button_yellow"
+                        app:cornerRadius="19dp"
+                        app:strokeColor="@color/glow_gold"
+                        app:strokeWidth="2dp" />
 
                     <Space
                         android:layout_width="12dp"
@@ -393,7 +402,9 @@
                         android:textColor="@color/white"
                         android:textSize="9sp"
                         app:backgroundTint="@color/controller_dpad"
-                        app:cornerRadius="19dp" />
+                        app:cornerRadius="19dp"
+                        app:strokeColor="@color/chrome_stroke"
+                        app:strokeWidth="2dp" />
 
                     <Space
                         android:layout_width="12dp"
@@ -417,7 +428,9 @@
                         android:textColor="@color/white"
                         android:textSize="9sp"
                         app:backgroundTint="@color/controller_dpad"
-                        app:cornerRadius="19dp" />
+                        app:cornerRadius="19dp"
+                        app:strokeColor="@color/chrome_stroke"
+                        app:strokeWidth="2dp" />
 
                     <Space
                         android:layout_width="12dp"
@@ -441,7 +454,9 @@
                         android:textColor="@color/white"
                         android:textSize="9sp"
                         app:backgroundTint="@color/xbox_button_green"
-                        app:cornerRadius="19dp" />
+                        app:cornerRadius="19dp"
+                        app:strokeColor="@color/glow_calib_green"
+                        app:strokeWidth="2dp" />
 
                     <Space
                         android:layout_width="12dp"
@@ -462,10 +477,12 @@
                         android:paddingHorizontal="0dp"
                         android:paddingVertical="0dp"
                         android:text="@string/cmd_reset_arena_short"
-                        android:textColor="?attr/colorOnError"
+                        android:textColor="@color/white"
                         android:textSize="9sp"
-                        app:backgroundTint="?attr/colorError"
-                        app:cornerRadius="19dp" />
+                        app:backgroundTint="@color/track_curb_red"
+                        app:cornerRadius="19dp"
+                        app:strokeColor="@color/glow_start_red"
+                        app:strokeWidth="2dp" />
 
                     <Space
                         android:layout_width="0dp"

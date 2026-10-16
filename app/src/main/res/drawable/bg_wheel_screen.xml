@@ -1,5 +1,20 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="@color/joystick_base" />
-    <corners android:radius="16dp" />
-</shape>
+<!-- Wheel dashboard "screen", light theme: near-black face with a subtle controller-grey bezel.
+     drawable-night/ swaps the bezel for chrome to match the Task 2 ENGINE LOG frame. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/controller_dpad" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/joystick_base" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+</layer-list>

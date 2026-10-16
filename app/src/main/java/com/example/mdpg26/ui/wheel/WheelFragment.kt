@@ -250,9 +250,7 @@ class WheelFragment : Fragment() {
                     bluetoothViewModel.connectionState.collect { state ->
                         val connected = state is ConnectionUiState.Connected
                         setControlsEnabled(connected)
-                        binding.btnBluetooth.iconTint = ColorStateList.valueOf(
-                            ContextCompat.getColor(requireContext(), connectionDotColorRes(state))
-                        )
+                        renderBluetoothButton(state)
                     }
                 }
                 launch {
@@ -271,6 +269,29 @@ class WheelFragment : Fragment() {
                 }
             }
         }
+    }
+
+    /** Disconnected: red button with a struck-through Bluetooth icon. Otherwise the usual grey
+     *  button with the icon tinted by state (yellow connecting, green connected). */
+    private fun renderBluetoothButton(state: ConnectionUiState) {
+        val disconnected = state is ConnectionUiState.Disconnected
+        val context = requireContext()
+        binding.btnBluetooth.setIconResource(
+            if (disconnected) R.drawable.ic_bluetooth_disabled else R.drawable.ic_bluetooth
+        )
+        binding.btnBluetooth.backgroundTintList = ColorStateList.valueOf(
+            ContextCompat.getColor(context, if (disconnected) R.color.status_error else R.color.controller_dpad)
+        )
+        binding.btnBluetooth.iconTint = ColorStateList.valueOf(
+            ContextCompat.getColor(context, if (disconnected) R.color.white else connectionDotColorRes(state))
+        )
+        val label = when (state) {
+            is ConnectionUiState.Connected -> getString(R.string.status_connected_title)
+            is ConnectionUiState.Connecting -> getString(R.string.status_connecting_title)
+            is ConnectionUiState.Reconnecting -> getString(R.string.status_reconnecting_title_fmt, state.attempt)
+            is ConnectionUiState.Disconnected -> getString(R.string.status_disconnected_title)
+        }
+        binding.btnBluetooth.contentDescription = getString(R.string.cd_wheel_bluetooth_fmt, label)
     }
 
     private fun connectionDotColorRes(state: ConnectionUiState): Int = when (state) {

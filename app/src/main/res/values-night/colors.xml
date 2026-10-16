@@ -2,5 +2,5 @@
 <resources>
     <!-- Recognised-obstacle fill for dark mode: a touch lighter than values/ so it stands out
          from the deep-teal arena grid while keeping white ID text readable. -->
-    <color name="arena_obstacle_recognised_fill">#12784C</color>
+    <color name="arena_obstacle_recognised_fill">#18925C</color>
 </resources>

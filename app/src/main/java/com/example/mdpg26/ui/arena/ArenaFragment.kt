@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -35,6 +37,10 @@ class ArenaFragment : Fragment() {
 
     private val bluetoothViewModel: BluetoothViewModel by activityViewModels()
     private val arenaViewModel: ArenaViewModel by activityViewModels()
+
+    // False when embedded in the Wheel tab, which shows connection state on its own Bluetooth
+    // button instead of this fragment's "Not connected" banner.
+    private var showConnectionBanner = true
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -147,7 +153,8 @@ class ArenaFragment : Fragment() {
                 launch {
                     bluetoothViewModel.connectionState.collect { state ->
                         val connected = state is ConnectionUiState.Connected
-                        binding.bannerNotConnected.visibility = if (connected) View.GONE else View.VISIBLE
+                        binding.bannerNotConnected.visibility =
+                            if (connected || !showConnectionBanner) View.GONE else View.VISIBLE
                     }
                 }
                 launch {
@@ -174,11 +181,37 @@ class ArenaFragment : Fragment() {
     }
 
     /** Hides this fragment's own tool toggle group + legend when an embedding fragment provides
-     *  its own controls for them instead (see [setTool]). */
+     *  its own controls for them instead (see [setTool]). Hidden, the layout also goes compact
+     *  for the Wheel tab: no robot status/rotate row (tapping the robot with the Robot tool
+     *  still rotates it), no "Not connected" banner (the Wheel's Bluetooth button shows that),
+     *  slimmer margins so the grid gets the freed space, and a racetrack curb border to match
+     *  the Task 2 tab. */
     fun setToolControlsVisible(visible: Boolean) {
+        val b = _binding ?: return
         val visibility = if (visible) View.VISIBLE else View.GONE
-        _binding?.toolToggleGroup?.visibility = visibility
-        _binding?.textLegend?.visibility = visibility
+        b.toolToggleGroup.visibility = visibility
+        b.textLegend.visibility = visibility
+        b.robotStatusRow.visibility = visibility
+        showConnectionBanner = visible
+        if (!visible) b.bannerNotConnected.visibility = View.GONE
+        val density = resources.displayMetrics.density
+        val marginPx = ((if (visible) 16 else 4) * density).toInt()
+        b.arenaFrame.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            marginStart = marginPx
+            marginEnd = marginPx
+        }
+        // Wheel tab: sit the grid inside the same grass + red/white curb border as Task 2's track.
+        if (visible) {
+            b.arenaFrame.background = null
+            b.arenaFrame.setPadding(0, 0, 0, 0)
+            b.arenaCard.strokeWidth = (1 * density).toInt()
+        } else {
+            val border = TrackBorderDrawable(requireContext())
+            b.arenaFrame.background = border
+            b.arenaFrame.setPadding(border.borderPx, border.borderPx, border.borderPx, border.borderPx)
+            b.arenaCard.strokeWidth = 0
+        }
+        b.arenaContent.updatePadding(bottom = ((if (visible) 12 else 4) * density).toInt())
     }
 
     override fun onDestroyView() {

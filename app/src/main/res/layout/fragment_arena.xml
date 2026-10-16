@@ -9,6 +9,7 @@
     tools:context=".ui.arena.ArenaFragment">
 
     <LinearLayout
+        android:id="@+id/arenaContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -98,12 +99,20 @@
             android:text="@string/arena_legend"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Material3.CardView.Outlined"
+        <!-- Plain wrapper here; on the Wheel tab it gets the racetrack curb border (see
+             ArenaFragment.setToolControlsVisible). -->
+        <FrameLayout
+            android:id="@+id/arenaFrame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="8dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/arenaCard"
+            style="@style/Widget.Material3.CardView.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="0dp"
             app:strokeColor="?attr/colorOutlineVariant">
@@ -114,8 +123,10 @@
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/cd_arena_view" />
         </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
 
         <LinearLayout
+            android:id="@+id/robotStatusRow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"

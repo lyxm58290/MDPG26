@@ -1,0 +1,8 @@
+<!-- Light theme: no visible rim — the same charcoal as the controller body, so the controller
+     reads as one solid piece against the light background. The chrome rim lives in
+     drawable-night/, where the dark body otherwise disappears into the dark background. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/controller_body" />
+    <corners android:radius="33dp" />
+</shape>
