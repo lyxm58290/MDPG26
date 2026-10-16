@@ -109,9 +109,10 @@ class ArenaView @JvmOverloads constructor(
     }
     private val obstacleTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
+        color = ContextCompat.getColor(context, R.color.arena_obstacle_text)
     }
-    private val obstacleIdTextColor = ContextCompat.getColor(context, R.color.arena_obstacle_text)
-    private val targetDetectedTextColor = ContextCompat.getColor(context, R.color.arena_target_detected_text)
+    private val obstacleFillColor = ContextCompat.getColor(context, R.color.arena_obstacle_fill)
+    private val recognisedFillColor = ContextCompat.getColor(context, R.color.arena_obstacle_recognised_fill)
     private val targetFacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
@@ -338,14 +339,28 @@ class ArenaView @JvmOverloads constructor(
         val rect = footprintRect(obstacle.x, obstacle.y, obstacle.size)
         val corner = cellSizePx * 0.2f
 
+        // Checklist C.9: once recognised, the obstacle turns dark green and shows the target ID
+        // in large bold white (instead of its small obstacle number).
+        val targetDetected = obstacle.targetId != null
+        obstaclePaint.color = if (targetDetected) recognisedFillColor else obstacleFillColor
         obstaclePaint.alpha = alpha
         canvas.drawRoundRect(rect, corner, corner, obstaclePaint)
 
-        val targetDetected = obstacle.targetId != null
         val displayText = obstacle.targetId ?: obstacle.id.toString()
-        obstacleTextPaint.color = if (targetDetected) targetDetectedTextColor else obstacleIdTextColor
         obstacleTextPaint.alpha = alpha
-        obstacleTextPaint.textSize = cellSizePx * obstacle.size * TARGET_TEXT_SCALE
+        if (targetDetected) {
+            obstacleTextPaint.typeface = Typeface.DEFAULT_BOLD
+            obstacleTextPaint.textSize = cellSizePx * obstacle.size * RECOGNISED_TEXT_SCALE
+            // Shrink to fit inside the square, clear of the face stripe, so 2+ digit IDs fit too.
+            val maxWidth = rect.width() - 2f * targetFacePaint.strokeWidth
+            val textWidth = obstacleTextPaint.measureText(displayText)
+            if (textWidth > maxWidth && maxWidth > 0f) {
+                obstacleTextPaint.textSize *= maxWidth / textWidth
+            }
+        } else {
+            obstacleTextPaint.typeface = Typeface.DEFAULT
+            obstacleTextPaint.textSize = cellSizePx * obstacle.size * TARGET_TEXT_SCALE
+        }
         val fm = obstacleTextPaint.fontMetrics
         val textY = rect.centerY() - (fm.descent + fm.ascent) / 2f
         canvas.drawText(displayText, rect.centerX(), textY, obstacleTextPaint)
@@ -553,6 +568,8 @@ class ArenaView @JvmOverloads constructor(
 
     private companion object {
         const val TARGET_TEXT_SCALE = 0.42f
+        /** Recognised target IDs: well above [TARGET_TEXT_SCALE], before shrink-to-fit. */
+        const val RECOGNISED_TEXT_SCALE = 0.7f
         /** Gap between the obstacle and its coordinate badge — enough to clear a fingertip. */
         const val BADGE_FINGER_CLEARANCE_DP = 28f
     }

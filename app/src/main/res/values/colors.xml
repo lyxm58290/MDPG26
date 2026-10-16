@@ -80,6 +80,9 @@
     <color name="arena_obstacle_fill">#2B2E38</color>
     <color name="arena_obstacle_text">#FFFFFF</color>
     <color name="arena_target_detected_text">#12B76A</color>
+    <!-- Obstacle fill once its target image is recognised (C.9); lighter in values-night so it
+         still stands out against the dark arena grid. White ID text on top in both. -->
+    <color name="arena_obstacle_recognised_fill">#0B5D3B</color>
     <color name="arena_target_face">#F5C400</color>
     <color name="arena_robot_fill">#0AB9E6</color>
     <color name="arena_robot_footprint">#400AB9E6</color>
