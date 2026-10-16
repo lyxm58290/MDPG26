@@ -91,6 +91,7 @@ class Task2Fragment : Fragment() {
         )
 
         binding.btnReset.setOnClickListener { confirmReset() }
+        binding.btnClearLog.setOnClickListener { confirmClearLog() }
         binding.btnCalibrateStraight.setOnClickListener {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             bluetoothViewModel.sendMessage(RobotCommands.CALIBRATE_STRAIGHT)
@@ -132,6 +133,15 @@ class Task2Fragment : Fragment() {
                 task2ViewModel.clearTargets()
                 task2ViewModel.resetLapTimer()
             }
+            .show()
+    }
+
+    private fun confirmClearLog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.confirm_clear_log_title)
+            .setMessage(R.string.confirm_clear_log_body)
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.action_clear) { _, _ -> bluetoothViewModel.clearMessages() }
             .show()
     }
 

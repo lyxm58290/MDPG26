@@ -230,18 +230,38 @@
         android:orientation="vertical"
         android:padding="4dp">
 
-        <TextView
-            style="@style/TextAppearance.Material3.LabelLarge"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="24dp"
             android:layout_marginTop="8dp"
-            android:background="@drawable/bg_engine_log_header"
-            android:gravity="center"
-            android:letterSpacing="0.15"
-            android:paddingVertical="8dp"
-            android:text="@string/task2_engine_log_title"
-            android:textColor="@color/white" />
+            android:background="@drawable/bg_engine_log_header">
+
+            <TextView
+                style="@style/TextAppearance.Material3.LabelLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="center"
+                android:letterSpacing="0.15"
+                android:paddingVertical="8dp"
+                android:text="@string/task2_engine_log_title"
+                android:textColor="@color/white" />
+
+            <!-- Clears the shared message log, after a confirmation. -->
+            <ImageButton
+                android:id="@+id/btnClearLog"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_clear_log"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_delete"
+                app:tint="@color/white" />
+        </FrameLayout>
 
         <FrameLayout
             android:layout_width="match_parent"

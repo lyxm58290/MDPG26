@@ -82,6 +82,10 @@
     <string name="confirm_reset_arena_body">This clears all obstacles, moves the robot back to its start position, and sends \"resetArena\" to the robot.</string>
     <string name="action_reset">Reset</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_clear">Clear</string>
+    <string name="cd_clear_log">Clear log</string>
+    <string name="confirm_clear_log_title">Clear log?</string>
+    <string name="confirm_clear_log_body">This removes every message from the log on the Terminal, Wheel and Task 2 tabs. Nothing is sent to the robot.</string>
 
     <!-- Wheel tab: F1-wheel style combined cockpit -->
     <string name="cmd_begin_explore_short">Exp</string>

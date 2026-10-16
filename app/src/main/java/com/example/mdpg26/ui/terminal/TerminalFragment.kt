@@ -12,10 +12,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.mdpg26.R
 import com.example.mdpg26.bluetooth.ConnectionUiState
 import com.example.mdpg26.databinding.FragmentTerminalBinding
 import com.example.mdpg26.ui.devicepicker.DeviceListBottomSheet
 import com.example.mdpg26.viewmodel.BluetoothViewModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 /** Send/receive terminal for the Bluetooth serial link — checklist C.1. */
@@ -54,6 +56,7 @@ class TerminalFragment : Fragment() {
             }
         }
         binding.bannerConnectAction.setOnClickListener { openDevicePicker() }
+        binding.btnClearLog.setOnClickListener { confirmClearLog() }
 
         observeState()
     }
@@ -63,6 +66,15 @@ class TerminalFragment : Fragment() {
         if (text.isEmpty()) return
         viewModel.sendMessage(text)
         binding.editMessage.text?.clear()
+    }
+
+    private fun confirmClearLog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.confirm_clear_log_title)
+            .setMessage(R.string.confirm_clear_log_body)
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.action_clear) { _, _ -> viewModel.clearMessages() }
+            .show()
     }
 
     private fun openDevicePicker() {
