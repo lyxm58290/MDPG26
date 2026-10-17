@@ -22,8 +22,8 @@ enum class Facing(val letter: String, val degrees: Float) {
 
 /**
  * A numbered obstacle block: 10cm x 10cm, i.e. a single 10cm grid cell. (x, y) is the
- * TOP-LEFT grid cell of that footprint, origin at the arena's top-left, x increasing right, y
- * increasing down (matching AMDTool's own coordinate convention — see scripts/defaultJson.cs).
+ * BOTTOM-LEFT grid cell of that footprint, origin at the arena's bottom-left, x increasing right,
+ * y increasing up (row 0 is drawn at the bottom; the same as [RobotState] and the algo planner).
  * [imageFace] is required at placement time (asked via a dialog) rather than defaulting to unset.
  * [id] is assigned once at placement and never changes (it's how later `TARGET,<id>,...` messages
  * address this obstacle — see checklist C.9); [targetId] is the RPi's recognized target-image

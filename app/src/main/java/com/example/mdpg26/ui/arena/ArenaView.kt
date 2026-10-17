@@ -275,10 +275,9 @@ class ArenaView @JvmOverloads constructor(
 
     /** Ruler-style axis ticks (0..width down the left gutter, 0..height along the bottom gutter)
      *  at grid-line positions rather than per-cell, so the x- and y-axes share a single "0" tick
-     *  at the grid's bottom-left corner. The underlying data model keeps its own (top-left origin,
-     *  y increasing down) convention — matching AMDTool/the RPi wire protocol, see
-     *  [com.example.mdpg26.arena.Obstacle] — but this view renders it bottom-up, so 0 is drawn at
-     *  the bottom of the grid. */
+     *  at the grid's bottom-left corner. The data model's origin is the bottom-left with y
+     *  increasing up (see [com.example.mdpg26.arena.Obstacle]), so row 0 is drawn at the bottom of
+     *  the grid and the screen's y-down axis is flipped. */
     private fun drawAxisLabels(canvas: Canvas, guide: Guide?) {
         val fm = labelTextPaint.fontMetrics
         val baselineOffset = -(fm.descent + fm.ascent) / 2f
@@ -378,7 +377,7 @@ class ArenaView @JvmOverloads constructor(
         }
     }
 
-    /** Maps a footprint's data-space (top-left origin, y-down) row/col to the screen rect, flipped
+    /** Maps a footprint's data-space (bottom-left origin, y-up) row/col to the screen rect, flipped
      *  so row 0 renders at the bottom of the grid — see [drawAxisLabels]. */
     private fun footprintRect(gridX: Int, gridY: Int, size: Int): RectF {
         val left = gridX * cellSizePx

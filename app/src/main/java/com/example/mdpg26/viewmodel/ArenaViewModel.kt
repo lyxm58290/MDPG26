@@ -56,7 +56,7 @@ class ArenaViewModel : ViewModel() {
     private var nextObstacleId = 1
 
     /**
-     * Places a new obstacle whose top-left corner is (x, y), facing [imageFace]. Returns null if
+     * Places a new obstacle whose bottom-left cell is (x, y), facing [imageFace]. Returns null if
      * its 4x4 footprint would go out of bounds or overlap an existing obstacle.
      */
     fun addObstacle(x: Int, y: Int, imageFace: Facing): Obstacle? {
@@ -78,7 +78,7 @@ class ArenaViewModel : ViewModel() {
     /**
      * Completes a drag. Dropping so the footprint no longer fully fits inside the arena deletes
      * the obstacle (checklist C.6); dropping on top of another obstacle is rejected (snaps back);
-     * otherwise the obstacle's top-left corner moves to (newX, newY).
+     * otherwise the obstacle's bottom-left cell moves to (newX, newY).
      */
     fun moveObstacle(id: Int, newX: Int, newY: Int): MoveOutcome {
         val current = _state.value
@@ -144,8 +144,8 @@ class ArenaViewModel : ViewModel() {
     fun strafeRobotLeft() = stepRobot(_state.value.robot.facing.previous())
     fun strafeRobotRight() = stepRobot(_state.value.robot.facing.next())
 
-    // Robot (x, y) is bottom-left-origin (see RobotState) — unlike Obstacle's top-left-origin
-    // (x, y) — so y increases upward here, opposite of the obstacle grid's y-down convention.
+    // Robot (x, y) is bottom-left-origin (see RobotState), like Obstacle's (x, y), so y
+    // increases upward here: NORTH is +y.
     private fun stepRobot(direction: Facing) {
         val (dx, dy) = when (direction) {
             Facing.NORTH -> 0 to 1

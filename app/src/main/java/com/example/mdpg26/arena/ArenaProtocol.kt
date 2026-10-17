@@ -4,7 +4,7 @@ package com.example.mdpg26.arena
  * String formats sent out over the Bluetooth link for obstacle placement/move (C.6) and
  * target-face annotation (C.7), combined into one message per the fixed field order below.
  *
- * OBSTACLE,<id>,<x>,<y>,<imageFace>   - obstacle <id>'s top-left grid cell is (x, y) and the
+ * OBSTACLE,<id>,<x>,<y>,<imageFace>   - obstacle <id>'s bottom-left grid cell is (x, y) and the
  *                                        face carrying the target image is <imageFace>. Sent on
  *                                        first placement, after a completed drag-move, and
  *                                        whenever the face is changed on an existing obstacle.
@@ -14,8 +14,8 @@ package com.example.mdpg26.arena
  * <imageFace> is one of N/E/S/W, viewed the same way as on screen: N = top of the obstacle
  * square, E = right, S = bottom, W = left.
  *
- * Coordinates use the arena's own convention: origin at the top-left, x increasing right, y
- * increasing down (see ArenaModels.kt / AMDTool's scripts).
+ * Coordinates use the arena's own convention: origin at the bottom-left, x increasing right, y
+ * increasing up (see ArenaModels.kt) — the same as the algo team's planner (visualise/model.py).
  */
 object ArenaProtocol {
     fun obstaclePlaced(obstacle: Obstacle): String =
