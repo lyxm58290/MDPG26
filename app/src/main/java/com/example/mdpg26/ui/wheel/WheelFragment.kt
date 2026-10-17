@@ -116,6 +116,12 @@ class WheelFragment : Fragment() {
             arenaFragment?.setTool(tool)
         }
 
+        // Local display only: independent of the connection, so a loaded path can still be
+        // shown (and replayed) after AMD Tool / the RPi disconnects.
+        binding.btnPathToggle.addOnCheckedChangeListener { _, isChecked ->
+            arenaViewModel.setPathVisible(isChecked)
+        }
+
         binding.btnForward.setOnClickListener {
             sendCommand(RobotCommands.FORWARD, getString(R.string.cmd_forward))
             arenaViewModel.moveRobotForward()
@@ -261,6 +267,9 @@ class WheelFragment : Fragment() {
                             binding.recyclerMessages.scrollToPosition(messages.size - 1)
                         }
                     }
+                }
+                launch {
+                    arenaViewModel.pathVisible.collect { binding.btnPathToggle.isChecked = it }
                 }
                 launch {
                     bluetoothViewModel.errors.collect { message ->

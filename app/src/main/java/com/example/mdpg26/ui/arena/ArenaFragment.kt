@@ -22,6 +22,7 @@ import com.example.mdpg26.viewmodel.ArenaViewModel
 import com.example.mdpg26.viewmodel.BluetoothViewModel
 import com.example.mdpg26.viewmodel.MoveOutcome
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -149,6 +150,11 @@ class ArenaFragment : Fragment() {
                             R.string.arena_robot_status_fmt,
                             state.robot.x, state.robot.y, state.robot.facing.name
                         )
+                    }
+                }
+                launch {
+                    combine(arenaViewModel.plannedPath, arenaViewModel.pathVisible, ::Pair).collect { (path, visible) ->
+                        binding.arenaView.setPlannedPath(path, visible)
                     }
                 }
                 launch {

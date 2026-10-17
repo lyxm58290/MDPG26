@@ -2,6 +2,8 @@ package com.example.mdpg26.ui.arena
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
@@ -19,6 +21,7 @@ import com.example.mdpg26.arena.ArenaState
 import com.example.mdpg26.arena.Facing
 import com.example.mdpg26.arena.OBSTACLE_SIZE_GRIDS
 import com.example.mdpg26.arena.Obstacle
+import com.example.mdpg26.arena.PlannedPath
 import com.example.mdpg26.arena.RobotState
 import kotlin.math.abs
 import kotlin.math.floor
@@ -63,6 +66,8 @@ class ArenaView @JvmOverloads constructor(
 
     private var arenaState: ArenaState = ArenaState()
     private var cellSizePx = 0f
+    private var plannedPath: PlannedPath? = null
+    private var pathVisible = true
 
     private data class DragState(
         val obstacleId: Int,
@@ -162,6 +167,28 @@ class ArenaView @JvmOverloads constructor(
     private val topGutterPx = dp(10f)
     private val rightGutterPx = dp(10f)
     private val bottomGutterPx = dp(20f)
+    private val plannedPathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(2.5f)
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = ContextCompat.getColor(context, R.color.arena_path)
+        pathEffect = DashPathEffect(floatArrayOf(dp(7f), dp(5f)), 0f)
+    }
+    private val pathMarkerFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val pathMarkerOutlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(1.5f)
+    }
+    private val pathMarkerTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        textSize = dp(9f)
+        typeface = Typeface.DEFAULT_BOLD
+        color = ContextCompat.getColor(context, R.color.arena_obstacle_fill)
+    }
+    private val pathStartColor = ContextCompat.getColor(context, R.color.arena_path_start)
+    private val pathMarkerColor = ContextCompat.getColor(context, R.color.arena_path_marker)
+    private val pathLine = Path()
     private val labelTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.themeColor(com.google.android.material.R.attr.colorOnSurfaceVariant)
         textAlign = Paint.Align.CENTER
@@ -178,6 +205,14 @@ class ArenaView @JvmOverloads constructor(
     fun setState(newState: ArenaState) {
         arenaState = newState
         if (width > 0) cellSizePx = gridWidthPx(width) / arenaState.width
+        invalidate()
+    }
+
+    /** The planned Task 1 path to draw under the obstacles and robot; nothing is drawn while
+     *  [path] is null or [visible] is false. */
+    fun setPlannedPath(path: PlannedPath?, visible: Boolean) {
+        plannedPath = path
+        pathVisible = visible
         invalidate()
     }
 
@@ -200,6 +235,7 @@ class ArenaView @JvmOverloads constructor(
         canvas.save()
         canvas.translate(leftGutterPx, topGutterPx)
         drawGrid(canvas)
+        plannedPath?.takeIf { pathVisible }?.let { drawPlannedPath(canvas, it) }
 
         val draggedId = dragState?.obstacleId
         arenaState.obstacles.forEach { obstacle ->
@@ -376,6 +412,60 @@ class ArenaView @JvmOverloads constructor(
             Facing.WEST -> canvas.drawLine(rect.left + inset, rect.top, rect.left + inset, rect.bottom, targetFacePaint)
             Facing.EAST -> canvas.drawLine(rect.right - inset, rect.top, rect.right - inset, rect.bottom, targetFacePaint)
         }
+    }
+
+    /** Algo-frame cm (origin bottom-left, y up — the same as the grid's own row 0 at the bottom)
+     *  to grid-translated view px. */
+    private fun pathX(xCm: Double): Float = (xCm / CELL_CM * cellSizePx).toFloat()
+    private fun pathY(yCm: Double): Float = ((arenaState.height * CELL_CM - yCm) / CELL_CM * cellSizePx).toFloat()
+
+    /** Dashed rear-axle trace of the planned path, with a start dot, a chequered finish, and a
+     *  numbered marker at each RECOGNISE stop. Clipped to the grid in case a bad PATH runs off it. */
+    private fun drawPlannedPath(canvas: Canvas, path: PlannedPath) {
+        val poses = path.replay.poses
+        canvas.save()
+        canvas.clipRect(0f, 0f, arenaState.width * cellSizePx, arenaState.height * cellSizePx)
+
+        pathLine.reset()
+        pathLine.moveTo(pathX(poses[0].xCm), pathY(poses[0].yCm))
+        for (i in 1 until poses.size) pathLine.lineTo(pathX(poses[i].xCm), pathY(poses[i].yCm))
+        canvas.drawPath(pathLine, plannedPathPaint)
+
+        val start = poses.first()
+        drawPathDot(canvas, pathX(start.xCm), pathY(start.yCm), dp(4.5f), pathStartColor)
+        val end = poses.last()
+        drawFinishFlag(canvas, pathX(end.xCm), pathY(end.yCm))
+        path.replay.recognitions.forEach { marker ->
+            val cx = pathX(marker.pose.xCm)
+            val cy = pathY(marker.pose.yCm)
+            drawPathDot(canvas, cx, cy, dp(7f), pathMarkerColor)
+            val fm = pathMarkerTextPaint.fontMetrics
+            canvas.drawText(marker.obstacleId, cx, cy - (fm.descent + fm.ascent) / 2f, pathMarkerTextPaint)
+        }
+        canvas.restore()
+    }
+
+    private fun drawPathDot(canvas: Canvas, cx: Float, cy: Float, radius: Float, color: Int) {
+        pathMarkerFillPaint.color = color
+        canvas.drawCircle(cx, cy, radius, pathMarkerFillPaint)
+        pathMarkerOutlinePaint.color = obstacleFillColor
+        canvas.drawCircle(cx, cy, radius, pathMarkerOutlinePaint)
+    }
+
+    /** A small 3x3 chequered square centred on the path's end. */
+    private fun drawFinishFlag(canvas: Canvas, cx: Float, cy: Float) {
+        val size = dp(10f)
+        val check = size / 3f
+        val left = cx - size / 2f
+        val top = cy - size / 2f
+        for (row in 0 until 3) {
+            for (col in 0 until 3) {
+                pathMarkerFillPaint.color = if ((row + col) % 2 == 0) obstacleFillColor else Color.WHITE
+                canvas.drawRect(left + col * check, top + row * check, left + (col + 1) * check, top + (row + 1) * check, pathMarkerFillPaint)
+            }
+        }
+        pathMarkerOutlinePaint.color = obstacleFillColor
+        canvas.drawRect(left, top, left + size, top + size, pathMarkerOutlinePaint)
     }
 
     private fun drawDragGhost(canvas: Canvas, drag: DragState) {
@@ -572,6 +662,8 @@ class ArenaView @JvmOverloads constructor(
         const val RECOGNISED_TEXT_SCALE = 0.7f
         /** Gap between the obstacle and its coordinate badge — enough to clear a fingertip. */
         const val BADGE_FINGER_CLEARANCE_DP = 28f
+        /** One grid cell, in the algo frame's cm. */
+        const val CELL_CM = 10.0
     }
 }
 

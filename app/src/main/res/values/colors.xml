@@ -89,6 +89,11 @@
     <color name="arena_robot_outline">#FFFFFF</color>
     <color name="arena_drag_ghost_valid">#12B76A</color>
     <color name="arena_drag_ghost_invalid">#F04438</color>
+    <!-- Planned Task 1 path (PATH message): the racing red, which keeps its contrast on both the
+         light and the dark arena grid and stays clear of the blue robot and gold image faces. -->
+    <color name="arena_path">@color/xbox_button_red</color>
+    <color name="arena_path_start">#12B76A</color>
+    <color name="arena_path_marker">#F5C400</color>
 
     <!-- Task 2 arena canvas: styled like a real racetrack — asphalt track surface, grass border,
          red/white curb striping — always rendered this way regardless of the app's light/dark

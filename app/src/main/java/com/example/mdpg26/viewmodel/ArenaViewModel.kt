@@ -38,6 +38,11 @@ class ArenaViewModel : ViewModel() {
      *  until one arrives and again after [resetArena]. */
     val plannedPath: StateFlow<PlannedPath?> = _plannedPath.asStateFlow()
 
+    private val _pathVisible = MutableStateFlow(true)
+
+    /** Whether the planned path is drawn on the arena (the Wheel tab's show/hide toggle). */
+    val pathVisible: StateFlow<Boolean> = _pathVisible.asStateFlow()
+
     private var nextObstacleId = 1
 
     /**
@@ -163,6 +168,10 @@ class ArenaViewModel : ViewModel() {
         val replay = PathReplayer.simulate(commands, PathReplayer.startPose(_state.value.robot))
         _plannedPath.value = PlannedPath(commands, replay)
         return replay
+    }
+
+    fun setPathVisible(visible: Boolean) {
+        _pathVisible.value = visible
     }
 
     /** Clears every obstacle and the planned path, returns the robot to its start cell, and
