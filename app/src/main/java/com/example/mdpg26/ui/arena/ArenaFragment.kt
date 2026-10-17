@@ -1,6 +1,7 @@
 package com.example.mdpg26.ui.arena
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -167,6 +168,19 @@ class ArenaFragment : Fragment() {
                         arenaViewModel.updateRobotPosition(update.x, update.y, update.facing)
                     }
                 }
+                launch {
+                    bluetoothViewModel.pathMessages.collect { path ->
+                        val replay = arenaViewModel.loadPath(path.commands)
+                        replay.skipped.forEach { Log.w(TAG, "PATH: skipped unrecognised command [$it]") }
+                        val loaded = getString(
+                            R.string.path_loaded_fmt, replay.motionCommandCount, replay.recognitions.size
+                        )
+                        bluetoothViewModel.logLocal(
+                            if (replay.skipped.isEmpty()) loaded
+                            else getString(R.string.path_loaded_skipped_fmt, loaded, replay.skipped.size)
+                        )
+                    }
+                }
             }
         }
     }
@@ -229,5 +243,7 @@ class ArenaFragment : Fragment() {
         /** Boolean fragment argument: false hides the tool toggle group + legend at creation
          *  time (see [WheelFragment][com.example.mdpg26.ui.wheel.WheelFragment]'s FragmentFactory). */
         const val ARG_SHOW_TOOL_CONTROLS = "show_tool_controls"
+
+        private const val TAG = "ArenaFragment"
     }
 }

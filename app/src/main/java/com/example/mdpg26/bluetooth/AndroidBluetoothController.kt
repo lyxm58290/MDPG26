@@ -136,6 +136,9 @@ class AndroidBluetoothController(
     private val _robotPositionUpdates = MutableSharedFlow<RobotPositionUpdate>(extraBufferCapacity = 32)
     override val robotPositionUpdates: SharedFlow<RobotPositionUpdate> = _robotPositionUpdates
 
+    private val _pathMessages = MutableSharedFlow<PathMessage>(extraBufferCapacity = 4)
+    override val pathMessages: SharedFlow<PathMessage> = _pathMessages
+
     private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
     override val errors: SharedFlow<String> = _errors
 
@@ -588,6 +591,12 @@ class AndroidBluetoothController(
      * has been idle for [READ_IDLE_FLUSH_MS], while newline-terminated bursts still split and
      * surface immediately from the read loop itself. [bufferLock] guards the shared StringBuilder
      * since the two coroutines can touch it concurrently.
+     *
+     * A `PATH|...` line ([PathMessage]) is the exception: at ~1 KB it spans several RFCOMM reads,
+     * and a stall of just [READ_IDLE_FLUSH_MS] between two of them would emit it cut in half.
+     * So once the buffer starts with `PATH|` it waits for the terminating '\n', and only falls
+     * back to an idle flush after the much longer [PATH_IDLE_FLUSH_MS] — enough for a sender
+     * that wrote the whole line but no newline, without splitting one that's still arriving.
      */
     private fun startReadLoop(activeSocket: BluetoothSocket) {
         val bufferLock = Any()
@@ -598,7 +607,8 @@ class AndroidBluetoothController(
             while (isActive) {
                 delay(READ_WATCHDOG_POLL_MS)
                 synchronized(bufferLock) {
-                    if (sb.isNotEmpty() && System.currentTimeMillis() - lastByteAt >= READ_IDLE_FLUSH_MS) {
+                    val idleFlushMs = if (PathMessage.isPathLine(sb)) PATH_IDLE_FLUSH_MS else READ_IDLE_FLUSH_MS
+                    if (sb.isNotEmpty() && System.currentTimeMillis() - lastByteAt >= idleFlushMs) {
                         addReceivedLine(sb.toString().trim())
                         sb.clear()
                     }
@@ -698,7 +708,7 @@ class AndroidBluetoothController(
      * Logs an incoming line to the terminal as usual, updates [robotStatus] if it's a status JSON
      * line, emits a [TargetDetection] (Task 1, checklist C.9) or [Task2Target] (Task 2 arrow) if
      * it's a `TARGET,...` line, and emits a [RobotPositionUpdate] if it's a `ROBOT,...` line
-     * (checklist C.10). On `START`, emits its timestamp to [task2Started]; on `DONE,TASK2`, emits the run time since the last START received from
+     * (checklist C.10), or a [PathMessage] if it's a `PATH|...` line. On `START`, emits its timestamp to [task2Started]; on `DONE,TASK2`, emits the run time since the last START received from
      * the RPi to [task2Done].
      */
     private fun addReceivedLine(line: String) {
@@ -713,6 +723,10 @@ class AndroidBluetoothController(
             }
         }
         RobotPositionUpdate.parse(line)?.let { _robotPositionUpdates.tryEmit(it) }
+        when (val path = PathMessage.parse(line)) {
+            null -> if (PathMessage.isPathLine(line)) Log.w(TAG, "Ignoring PATH message with no commands")
+            else -> _pathMessages.tryEmit(path)
+        }
         if (line.trim().equals(RobotCommands.TASK2_START, ignoreCase = true)) {
             task2StartedAt = received.timestamp
             _task2Started.tryEmit(received.timestamp)
@@ -793,6 +807,8 @@ class AndroidBluetoothController(
         // flushed as its own message, and how often the watchdog checks for that.
         const val READ_IDLE_FLUSH_MS = 150L
         const val READ_WATCHDOG_POLL_MS = 50L
+        // Same, for a buffered line that starts with PATH| — see startReadLoop().
+        const val PATH_IDLE_FLUSH_MS = 2000L
         // sendSequence() pacing: how long to wait for the peer to echo each message back, and
         // the pause after each message before the next. The gap must comfortably exceed the
         // peer's own read-idle flush window, or consecutive messages can still merge on its end.

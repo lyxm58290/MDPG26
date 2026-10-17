@@ -107,6 +107,9 @@
     <string name="cd_arena_view">Exploration arena grid with obstacles and robot position</string>
     <string name="arena_robot_status_fmt">Robot: (%1$d, %2$d) facing %3$s</string>
     <string name="arena_coordinate_badge_fmt">(%1$d, %2$d)</string>
+    <!-- System log line when a PATH message arrives: motion commands, RECOGNISE markers. -->
+    <string name="path_loaded_fmt">Path loaded: %1$d commands, %2$d photo stops</string>
+    <string name="path_loaded_skipped_fmt">%1$s (%2$d unrecognised lines skipped)</string>
     <string name="cd_rotate_robot_left">Rotate robot left</string>
     <string name="cd_rotate_robot_right">Rotate robot right</string>
 

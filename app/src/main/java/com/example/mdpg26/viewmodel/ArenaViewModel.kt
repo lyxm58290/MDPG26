@@ -5,6 +5,9 @@ import com.example.mdpg26.arena.ArenaState
 import com.example.mdpg26.arena.Facing
 import com.example.mdpg26.arena.OBSTACLE_SIZE_GRIDS
 import com.example.mdpg26.arena.Obstacle
+import com.example.mdpg26.arena.PathReplay
+import com.example.mdpg26.arena.PathReplayer
+import com.example.mdpg26.arena.PlannedPath
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +31,12 @@ class ArenaViewModel : ViewModel() {
 
     private val _state = MutableStateFlow(ArenaState())
     val state: StateFlow<ArenaState> = _state.asStateFlow()
+
+    private val _plannedPath = MutableStateFlow<PlannedPath?>(null)
+
+    /** The last `PATH` received (see [loadPath]), replayed from the robot's current pose; null
+     *  until one arrives and again after [resetArena]. */
+    val plannedPath: StateFlow<PlannedPath?> = _plannedPath.asStateFlow()
 
     private var nextObstacleId = 1
 
@@ -99,6 +108,7 @@ class ArenaViewModel : ViewModel() {
         val current = _state.value
         if (!robotInBounds(current, x, y)) return
         _state.update { st -> st.copy(robot = st.robot.copy(x = x, y = y)) }
+        replanFromRobot()
     }
 
     fun rotateRobot(clockwise: Boolean) {
@@ -106,6 +116,7 @@ class ArenaViewModel : ViewModel() {
             val next = if (clockwise) st.robot.facing.next() else st.robot.facing.previous()
             st.copy(robot = st.robot.copy(facing = next))
         }
+        replanFromRobot()
     }
 
     /**
@@ -140,12 +151,34 @@ class ArenaViewModel : ViewModel() {
         val current = _state.value
         if (!robotInBounds(current, x, y)) return
         _state.update { st -> st.copy(robot = st.robot.copy(x = x, y = y, facing = facing)) }
+        replanFromRobot()
     }
 
-    /** Clears every obstacle, returns the robot to its start cell, and restarts obstacle ids at 1. */
+    /**
+     * Makes [commands] (an incoming `PATH` message's mission_stm.txt lines) the planned path,
+     * replacing any previous one, replayed from the robot's current pose as the planner's start.
+     * Returns the replay so the caller can report on it.
+     */
+    fun loadPath(commands: List<String>): PathReplay {
+        val replay = PathReplayer.simulate(commands, PathReplayer.startPose(_state.value.robot))
+        _plannedPath.value = PlannedPath(commands, replay)
+        return replay
+    }
+
+    /** Clears every obstacle and the planned path, returns the robot to its start cell, and
+     *  restarts obstacle ids at 1. */
     fun resetArena() {
         nextObstacleId = 1
         _state.value = ArenaState()
+        _plannedPath.value = null
+    }
+
+    // The path always starts from wherever the robot is, so moving it re-runs the replay.
+    private fun replanFromRobot() {
+        val path = _plannedPath.value ?: return
+        _plannedPath.value = path.copy(
+            replay = PathReplayer.simulate(path.commands, PathReplayer.startPose(_state.value.robot))
+        )
     }
 
     private fun robotInBounds(state: ArenaState, x: Int, y: Int): Boolean {

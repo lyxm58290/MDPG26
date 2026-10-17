@@ -34,6 +34,9 @@ interface BluetoothController {
      */
     val task2Done: SharedFlow<Long>
     val robotPositionUpdates: SharedFlow<RobotPositionUpdate>
+
+    /** Emits each complete `PATH|...` line received (see [PathMessage]). */
+    val pathMessages: SharedFlow<PathMessage>
     val errors: SharedFlow<String>
 
     fun isBluetoothSupported(): Boolean

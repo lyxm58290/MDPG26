@@ -170,3 +170,6 @@ object PathReplayer {
 
     private const val GRID_CM = 10.0
 }
+
+/** A PATH the tablet has received: the raw commands and their replay from the robot's start. */
+data class PlannedPath(val commands: List<String>, val replay: PathReplay)

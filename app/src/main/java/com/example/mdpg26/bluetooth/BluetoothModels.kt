@@ -107,6 +107,29 @@ data class RobotPositionUpdate(val x: Int, val y: Int, val facing: Facing) {
     }
 }
 
+/**
+ * The planner's Task 1 command list, from a `PATH|<cmd>|<cmd>|...` line: the exact
+ * mission_stm.txt lines the RPi drives (`TURN,...`, `STRAIGHT,...`, `# RECOGNISE obstacle <id>`),
+ * `|`-separated since the commands themselves contain commas. One line, `\n`-terminated, often
+ * well over 1 KB — see [isPathLine] for how the read loop keeps it in one piece.
+ */
+data class PathMessage(val commands: List<String>) {
+    companion object {
+        const val PREFIX = "PATH|"
+
+        /** True if [text] (e.g. a partially received line) is the start of a PATH message. */
+        fun isPathLine(text: CharSequence): Boolean = text.trimStart().startsWith(PREFIX)
+
+        /** Returns null for anything that isn't a PATH line or carries no commands. Never throws. */
+        fun parse(line: String): PathMessage? {
+            val s = line.trim()
+            if (!s.startsWith(PREFIX)) return null
+            val commands = s.removePrefix(PREFIX).split("|").map { it.trim() }.filter { it.isNotEmpty() }
+            return if (commands.isEmpty()) null else PathMessage(commands)
+        }
+    }
+}
+
 data class TerminalMessage(
     val text: String,
     val direction: MessageDirection,
