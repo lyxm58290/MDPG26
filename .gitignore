@@ -15,3 +15,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+/visualise
+/RPI_PATH_ANALYSIS.md
