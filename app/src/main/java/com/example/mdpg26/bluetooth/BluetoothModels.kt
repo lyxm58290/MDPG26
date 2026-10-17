@@ -91,8 +91,9 @@ data class Task2Target(val obstacleId: Int, val direction: Task2Direction) : Tar
 
 /**
  * RPi-reported robot position/heading update (checklist C.10), parsed from a
- * `ROBOT,<x>,<y>,<direction>` line — <x>/<y> are grid coordinates and <direction> is one of
- * N/E/S/W (see [Facing.letter]).
+ * `ROBOT,<x>,<y>,<direction>` line — <x>/<y> are grid coordinates and <direction> is either a
+ * letter N/E/S/W (see [Facing.letter]) or the full NORTH/EAST/SOUTH/WEST, which is what the app
+ * itself sends (see [com.example.mdpg26.arena.ArenaProtocol.robotLocation]).
  */
 data class RobotPositionUpdate(val x: Int, val y: Int, val facing: Facing) {
     companion object {
@@ -101,7 +102,9 @@ data class RobotPositionUpdate(val x: Int, val y: Int, val facing: Facing) {
             if (parts.size != 4 || parts[0] != "ROBOT") return null
             val x = parts[1].toIntOrNull() ?: return null
             val y = parts[2].toIntOrNull() ?: return null
-            val facing = Facing.fromLetter(parts[3]) ?: return null
+            val facing = Facing.fromLetter(parts[3])
+                ?: Facing.entries.firstOrNull { it.name == parts[3] }
+                ?: return null
             return RobotPositionUpdate(x, y, facing)
         }
     }
