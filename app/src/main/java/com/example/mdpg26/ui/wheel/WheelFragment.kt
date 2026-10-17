@@ -30,6 +30,7 @@ import com.example.mdpg26.viewmodel.ArenaViewModel
 import com.example.mdpg26.viewmodel.BluetoothViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -120,6 +121,11 @@ class WheelFragment : Fragment() {
         // shown (and replayed) after AMD Tool / the RPi disconnects.
         binding.btnPathToggle.addOnCheckedChangeListener { _, isChecked ->
             arenaViewModel.setPathVisible(isChecked)
+        }
+        // Tablet-only animation: plays/stops locally and never sends anything over Bluetooth.
+        binding.btnPathPlay.setOnClickListener {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            if (arenaViewModel.replayProgress.value == null) arenaViewModel.playPath() else arenaViewModel.stopPath()
         }
 
         binding.btnForward.setOnClickListener {
@@ -272,6 +278,10 @@ class WheelFragment : Fragment() {
                     arenaViewModel.pathVisible.collect { binding.btnPathToggle.isChecked = it }
                 }
                 launch {
+                    combine(arenaViewModel.plannedPath, arenaViewModel.replayProgress, ::Pair)
+                        .collect { (path, progress) -> renderPathPlayButton(path != null, progress != null) }
+                }
+                launch {
                     bluetoothViewModel.errors.collect { message ->
                         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                     }
@@ -301,6 +311,14 @@ class WheelFragment : Fragment() {
             is ConnectionUiState.Disconnected -> getString(R.string.status_disconnected_title)
         }
         binding.btnBluetooth.contentDescription = getString(R.string.cd_wheel_bluetooth_fmt, label)
+    }
+
+    /** Play while idle, Stop once a replay has started (running or finished at the end pose). */
+    private fun renderPathPlayButton(hasPath: Boolean, replaying: Boolean) {
+        binding.btnPathPlay.isEnabled = hasPath
+        binding.btnPathPlay.alpha = if (hasPath) 1f else 0.4f
+        binding.btnPathPlay.setIconResource(if (replaying) R.drawable.ic_stop else R.drawable.ic_play_arrow)
+        binding.btnPathPlay.contentDescription = getString(if (replaying) R.string.cd_path_stop else R.string.cd_path_play)
     }
 
     private fun connectionDotColorRes(state: ConnectionUiState): Int = when (state) {

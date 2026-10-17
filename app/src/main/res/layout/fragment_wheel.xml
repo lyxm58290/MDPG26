@@ -512,6 +512,31 @@
                         app:iconTint="@color/white" />
 
                     <Space
+                        android:layout_width="6dp"
+                        android:layout_height="1dp" />
+
+                    <!-- Planned path replay: Play, or Stop once started (icon swapped in code).
+                         Enabled only while a path is loaded. -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPathPlay"
+                        style="@style/Widget.Material3.Button.IconButton.Filled"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:contentDescription="@string/cd_path_play"
+                        android:enabled="false"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/controller_dpad"
+                        app:cornerRadius="19dp"
+                        app:icon="@drawable/ic_play_arrow"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/white" />
+
+                    <Space
                         android:layout_width="12dp"
                         android:layout_height="1dp" />
 

@@ -111,6 +111,8 @@
     <string name="path_loaded_fmt">Path loaded: %1$d commands, %2$d photo stops</string>
     <string name="path_loaded_skipped_fmt">%1$s (%2$d unrecognised lines skipped)</string>
     <string name="cd_path_toggle">Show planned path</string>
+    <string name="cd_path_play">Play path replay</string>
+    <string name="cd_path_stop">Stop path replay</string>
     <string name="cd_rotate_robot_left">Rotate robot left</string>
     <string name="cd_rotate_robot_right">Rotate robot right</string>
 

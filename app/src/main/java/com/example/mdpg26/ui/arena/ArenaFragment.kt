@@ -22,7 +22,11 @@ import com.example.mdpg26.viewmodel.ArenaViewModel
 import com.example.mdpg26.viewmodel.BluetoothViewModel
 import com.example.mdpg26.viewmodel.MoveOutcome
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.android.awaitFrame
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -153,9 +157,30 @@ class ArenaFragment : Fragment() {
                     }
                 }
                 launch {
-                    combine(arenaViewModel.plannedPath, arenaViewModel.pathVisible, ::Pair).collect { (path, visible) ->
-                        binding.arenaView.setPlannedPath(path, visible)
+                    combine(
+                        arenaViewModel.plannedPath, arenaViewModel.pathVisible, arenaViewModel.replayProgress, ::Triple
+                    ).collect { (path, visible, progress) ->
+                        binding.arenaView.setPlannedPath(path, visible, progress?.elapsedMs)
                     }
+                }
+                // Drives a running path replay, one step per display frame. Only while this view
+                // is STARTED: hidden, it simply stops ticking, and picks up from the progress kept
+                // in ArenaViewModel when it's back (including after a rotation).
+                launch {
+                    arenaViewModel.replayProgress.map { it?.playing == true }.distinctUntilChanged()
+                        .collectLatest { playing ->
+                            if (!playing) return@collectLatest
+                            var lastFrameNanos = awaitFrame()
+                            var carryNanos = 0L
+                            while (true) {
+                                val now = awaitFrame()
+                                carryNanos += now - lastFrameNanos
+                                lastFrameNanos = now
+                                val deltaMs = carryNanos / 1_000_000
+                                carryNanos -= deltaMs * 1_000_000
+                                arenaViewModel.advancePathReplay(deltaMs)
+                            }
+                        }
                 }
                 launch {
                     bluetoothViewModel.connectionState.collect { state ->

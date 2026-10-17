@@ -41,6 +41,57 @@ class ArenaViewModelPathTest {
     }
 
     @Test
+    fun playPath_withoutPath_doesNothing() {
+        val vm = ArenaViewModel()
+        vm.playPath()
+        assertNull(vm.replayProgress.value)
+    }
+
+    @Test
+    fun replay_runsToEndAndHoldsUntilStopped() {
+        val vm = ArenaViewModel()
+        vm.loadPath(listOf("STRAIGHT,GOCM,20"))
+        vm.playPath()
+        assertEquals(PathReplayProgress(0, playing = true), vm.replayProgress.value)
+        vm.advancePathReplay(200)
+        assertEquals(PathReplayProgress(200, playing = true), vm.replayProgress.value)
+        vm.advancePathReplay(10_000)
+        assertEquals(PathReplayProgress(500, playing = false), vm.replayProgress.value)
+        // Finished: further ticks change nothing, the robot stays at the end.
+        vm.advancePathReplay(100)
+        assertEquals(PathReplayProgress(500, playing = false), vm.replayProgress.value)
+        vm.stopPath()
+        assertNull(vm.replayProgress.value)
+    }
+
+    @Test
+    fun replay_endsOnNewPathResetOrRobotMove() {
+        val vm = ArenaViewModel()
+        vm.loadPath(commands)
+        vm.playPath()
+        vm.loadPath(commands)
+        assertNull(vm.replayProgress.value)
+
+        vm.playPath()
+        vm.moveRobot(2, 2)
+        assertNull(vm.replayProgress.value)
+
+        vm.playPath()
+        vm.resetArena()
+        assertNull(vm.replayProgress.value)
+    }
+
+    @Test
+    fun replay_leavesRobotStateAlone() {
+        val vm = ArenaViewModel()
+        vm.loadPath(commands)
+        val robot = vm.state.value.robot
+        vm.playPath()
+        vm.advancePathReplay(1_000)
+        assertEquals(robot, vm.state.value.robot)
+    }
+
+    @Test
     fun movingRobot_replansFromNewStart() {
         val vm = ArenaViewModel()
         vm.loadPath(commands)

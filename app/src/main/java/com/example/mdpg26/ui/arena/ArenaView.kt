@@ -17,11 +17,14 @@ import android.view.ViewConfiguration
 import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
 import com.example.mdpg26.R
+import com.example.mdpg26.arena.AlgoPose
 import com.example.mdpg26.arena.ArenaState
 import com.example.mdpg26.arena.Facing
 import com.example.mdpg26.arena.OBSTACLE_SIZE_GRIDS
 import com.example.mdpg26.arena.Obstacle
+import com.example.mdpg26.arena.PathReplayer
 import com.example.mdpg26.arena.PlannedPath
+import com.example.mdpg26.arena.ReplayFrame
 import com.example.mdpg26.arena.RobotState
 import kotlin.math.abs
 import kotlin.math.floor
@@ -68,6 +71,7 @@ class ArenaView @JvmOverloads constructor(
     private var cellSizePx = 0f
     private var plannedPath: PlannedPath? = null
     private var pathVisible = true
+    private var replayFrame: ReplayFrame? = null
 
     private data class DragState(
         val obstacleId: Int,
@@ -175,6 +179,15 @@ class ArenaView @JvmOverloads constructor(
         color = ContextCompat.getColor(context, R.color.arena_path)
         pathEffect = DashPathEffect(floatArrayOf(dp(7f), dp(5f)), 0f)
     }
+    private val travelledPathPaint = Paint(plannedPathPaint).apply {
+        strokeWidth = dp(3.5f)
+        pathEffect = null
+    }
+    private val pulsePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(3f)
+        color = ContextCompat.getColor(context, R.color.arena_path_marker)
+    }
     private val pathMarkerFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val pathMarkerOutlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -209,10 +222,12 @@ class ArenaView @JvmOverloads constructor(
     }
 
     /** The planned Task 1 path to draw under the obstacles and robot; nothing is drawn while
-     *  [path] is null or [visible] is false. */
-    fun setPlannedPath(path: PlannedPath?, visible: Boolean) {
+     *  [path] is null or [visible] is false. With [replayElapsedMs] set, the robot is drawn
+     *  that far along the path's replay animation instead of at its own (x, y, facing). */
+    fun setPlannedPath(path: PlannedPath?, visible: Boolean, replayElapsedMs: Long?) {
         plannedPath = path
         pathVisible = visible
+        replayFrame = if (path != null && replayElapsedMs != null) path.timeline.frameAt(replayElapsedMs) else null
         invalidate()
     }
 
@@ -235,14 +250,16 @@ class ArenaView @JvmOverloads constructor(
         canvas.save()
         canvas.translate(leftGutterPx, topGutterPx)
         drawGrid(canvas)
-        plannedPath?.takeIf { pathVisible }?.let { drawPlannedPath(canvas, it) }
+        val frame = replayFrame
+        plannedPath?.takeIf { pathVisible }?.let { drawPlannedPath(canvas, it, frame) }
 
         val draggedId = dragState?.obstacleId
         arenaState.obstacles.forEach { obstacle ->
             drawObstacle(canvas, obstacle, alpha = if (obstacle.id == draggedId) 80 else 255)
         }
+        frame?.pulse?.let { drawRecognisePulse(canvas, it) }
         dragState?.let { drawDragGhost(canvas, it) }
-        drawRobot(canvas, arenaState.robot)
+        if (frame != null) drawReplayRobot(canvas, frame.pose) else drawRobot(canvas, arenaState.robot)
         val guide = activeGuide()
         if (guide != null) {
             // A drag's ghost outline is drawn above (it also covers off-grid drops, which have
@@ -420,8 +437,9 @@ class ArenaView @JvmOverloads constructor(
     private fun pathY(yCm: Double): Float = ((arenaState.height * CELL_CM - yCm) / CELL_CM * cellSizePx).toFloat()
 
     /** Dashed rear-axle trace of the planned path, with a start dot, a chequered finish, and a
-     *  numbered marker at each RECOGNISE stop. Clipped to the grid in case a bad PATH runs off it. */
-    private fun drawPlannedPath(canvas: Canvas, path: PlannedPath) {
+     *  numbered marker at each RECOGNISE stop. While replaying ([frame]), the part already
+     *  driven is drawn solid on top. Clipped to the grid in case a bad PATH runs off it. */
+    private fun drawPlannedPath(canvas: Canvas, path: PlannedPath, frame: ReplayFrame?) {
         val poses = path.replay.poses
         canvas.save()
         canvas.clipRect(0f, 0f, arenaState.width * cellSizePx, arenaState.height * cellSizePx)
@@ -430,6 +448,14 @@ class ArenaView @JvmOverloads constructor(
         pathLine.moveTo(pathX(poses[0].xCm), pathY(poses[0].yCm))
         for (i in 1 until poses.size) pathLine.lineTo(pathX(poses[i].xCm), pathY(poses[i].yCm))
         canvas.drawPath(pathLine, plannedPathPaint)
+
+        if (frame != null) {
+            pathLine.reset()
+            pathLine.moveTo(pathX(poses[0].xCm), pathY(poses[0].yCm))
+            for (i in 1..frame.passedIndex) pathLine.lineTo(pathX(poses[i].xCm), pathY(poses[i].yCm))
+            pathLine.lineTo(pathX(frame.pose.xCm), pathY(frame.pose.yCm))
+            canvas.drawPath(pathLine, travelledPathPaint)
+        }
 
         val start = poses.first()
         drawPathDot(canvas, pathX(start.xCm), pathY(start.yCm), dp(4.5f), pathStartColor)
@@ -450,6 +476,53 @@ class ArenaView @JvmOverloads constructor(
         canvas.drawCircle(cx, cy, radius, pathMarkerFillPaint)
         pathMarkerOutlinePaint.color = obstacleFillColor
         canvas.drawCircle(cx, cy, radius, pathMarkerOutlinePaint)
+    }
+
+    /** The obstacle being photographed at a RECOGNISE stop: two gold rings swelling out of it
+     *  and fading over the stop. Nothing if the marker names no obstacle on the arena. */
+    private fun drawRecognisePulse(canvas: Canvas, pulse: ReplayFrame.Pulse) {
+        val obstacle = arenaState.obstacles.firstOrNull { it.id.toString() == pulse.obstacleId } ?: return
+        val rect = footprintRect(obstacle.x, obstacle.y, obstacle.size)
+        val corner = cellSizePx * 0.2f
+        repeat(PULSE_RINGS) { ring ->
+            val t = (pulse.phase * PULSE_RINGS - ring).coerceIn(0f, 1f)
+            if (t <= 0f || t >= 1f) return@repeat
+            val grow = cellSizePx * 0.6f * t
+            pulsePaint.alpha = (255 * (1f - t)).toInt()
+            val r = RectF(rect.left - grow, rect.top - grow, rect.right + grow, rect.bottom + grow)
+            canvas.drawRoundRect(r, corner + grow, corner + grow, pulsePaint)
+        }
+    }
+
+    /**
+     * The robot mid-replay: the real 23 x 19 cm car body at the free heading, placed so its rear
+     * axle sits on the path (the planner's pose is the rear-axle midpoint; the body centre is
+     * [PathReplayer.AXLE_TO_CENTRE_CM] ahead of it). Same fill + heading arrow as [drawRobot].
+     */
+    private fun drawReplayRobot(canvas: Canvas, pose: AlgoPose) {
+        val (centreXCm, centreYCm) = PathReplayer.bodyCentre(pose)
+        val cx = pathX(centreXCm)
+        val cy = pathY(centreYCm)
+        val halfWidth = (PathReplayer.CAR_WIDTH_CM / 2 / CELL_CM * cellSizePx).toFloat()
+        val halfLength = (PathReplayer.CAR_LENGTH_CM / 2 / CELL_CM * cellSizePx).toFloat()
+
+        canvas.save()
+        canvas.rotate(PathReplayer.appDegrees(pose.headingDeg).toFloat(), cx, cy)
+        val body = RectF(cx - halfWidth, cy - halfLength, cx + halfWidth, cy + halfLength)
+        val corner = cellSizePx * 0.15f
+        canvas.drawRoundRect(body, corner, corner, robotFootprintPaint)
+        canvas.drawRoundRect(body, corner, corner, robotOutlinePaint)
+        val marginX = body.width() * 0.18f
+        val marginY = body.height() * 0.15f
+        val arrow = Path().apply {
+            moveTo(cx, body.top + marginY)
+            lineTo(body.right - marginX, body.bottom - marginY)
+            lineTo(body.left + marginX, body.bottom - marginY)
+            close()
+        }
+        canvas.drawPath(arrow, robotFillPaint)
+        canvas.drawPath(arrow, robotOutlinePaint)
+        canvas.restore()
     }
 
     /** A small 3x3 chequered square centred on the path's end. */
@@ -664,6 +737,8 @@ class ArenaView @JvmOverloads constructor(
         const val BADGE_FINGER_CLEARANCE_DP = 28f
         /** One grid cell, in the algo frame's cm. */
         const val CELL_CM = 10.0
+        /** Rings per RECOGNISE stop pulse — see [drawRecognisePulse]. */
+        const val PULSE_RINGS = 2
     }
 }
 

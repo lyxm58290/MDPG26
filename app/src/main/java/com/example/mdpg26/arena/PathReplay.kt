@@ -172,4 +172,7 @@ object PathReplayer {
 }
 
 /** A PATH the tablet has received: the raw commands and their replay from the robot's start. */
-data class PlannedPath(val commands: List<String>, val replay: PathReplay)
+data class PlannedPath(val commands: List<String>, val replay: PathReplay) {
+    /** The replay animation's timing (see [PathTimeline]); not part of equality. */
+    val timeline: PathTimeline by lazy { PathTimeline(replay) }
+}

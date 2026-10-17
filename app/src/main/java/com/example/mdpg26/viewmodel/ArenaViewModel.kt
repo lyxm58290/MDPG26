@@ -20,6 +20,10 @@ sealed class MoveOutcome {
     data object Rejected : MoveOutcome()
 }
 
+/** How far the planned path's replay animation has got: [elapsedMs] into its
+ *  [com.example.mdpg26.arena.PathTimeline], still running while [playing], otherwise finished. */
+data class PathReplayProgress(val elapsedMs: Long, val playing: Boolean)
+
 /**
  * Owns the canonical arena state (obstacles + robot). Pure and Bluetooth-agnostic by design:
  * [com.example.mdpg26.ui.arena.ArenaFragment] observes [state], forwards raw gestures from
@@ -42,6 +46,12 @@ class ArenaViewModel : ViewModel() {
 
     /** Whether the planned path is drawn on the arena (the Wheel tab's show/hide toggle). */
     val pathVisible: StateFlow<Boolean> = _pathVisible.asStateFlow()
+
+    private val _replayProgress = MutableStateFlow<PathReplayProgress?>(null)
+
+    /** The planned path's replay animation (see [playPath]); null while not replaying, when the
+     *  robot is drawn as usual. Kept here so it survives rotation and tab switches. */
+    val replayProgress: StateFlow<PathReplayProgress?> = _replayProgress.asStateFlow()
 
     private var nextObstacleId = 1
 
@@ -167,11 +177,33 @@ class ArenaViewModel : ViewModel() {
     fun loadPath(commands: List<String>): PathReplay {
         val replay = PathReplayer.simulate(commands, PathReplayer.startPose(_state.value.robot))
         _plannedPath.value = PlannedPath(commands, replay)
+        _replayProgress.value = null
         return replay
     }
 
     fun setPathVisible(visible: Boolean) {
         _pathVisible.value = visible
+    }
+
+    /** Starts the planned path's replay animation from the beginning. Local to the tablet:
+     *  nothing is sent, and the robot's own [state] doesn't move. No-op without a path. */
+    fun playPath() {
+        if (_plannedPath.value == null) return
+        _replayProgress.value = PathReplayProgress(elapsedMs = 0, playing = true)
+    }
+
+    /** Ends the replay (running or finished): the robot goes back to its start pose. */
+    fun stopPath() {
+        _replayProgress.value = null
+    }
+
+    /** Moves a running replay on by [deltaMs] (called once per frame while it's on screen).
+     *  Reaching the end stops it there, leaving the robot at the final pose until [stopPath]. */
+    fun advancePathReplay(deltaMs: Long) {
+        val progress = _replayProgress.value?.takeIf { it.playing } ?: return
+        val totalMs = _plannedPath.value?.timeline?.totalMs ?: return stopPath()
+        val elapsed = (progress.elapsedMs + deltaMs).coerceAtMost(totalMs)
+        _replayProgress.value = PathReplayProgress(elapsed, playing = elapsed < totalMs)
     }
 
     /** Clears every obstacle and the planned path, returns the robot to its start cell, and
@@ -180,14 +212,17 @@ class ArenaViewModel : ViewModel() {
         nextObstacleId = 1
         _state.value = ArenaState()
         _plannedPath.value = null
+        _replayProgress.value = null
     }
 
-    // The path always starts from wherever the robot is, so moving it re-runs the replay.
+    // The path always starts from wherever the robot is, so moving it re-runs the replay (and
+    // ends any animation of the old one).
     private fun replanFromRobot() {
         val path = _plannedPath.value ?: return
         _plannedPath.value = path.copy(
             replay = PathReplayer.simulate(path.commands, PathReplayer.startPose(_state.value.robot))
         )
+        _replayProgress.value = null
     }
 
     private fun robotInBounds(state: ArenaState, x: Int, y: Int): Boolean {
