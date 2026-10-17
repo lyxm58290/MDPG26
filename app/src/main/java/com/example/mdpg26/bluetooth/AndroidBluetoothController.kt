@@ -139,6 +139,9 @@ class AndroidBluetoothController(
     private val _pathMessages = MutableSharedFlow<PathMessage>(extraBufferCapacity = 4)
     override val pathMessages: SharedFlow<PathMessage> = _pathMessages
 
+    private val _debugObstacles = MutableSharedFlow<DebugObstaclesMessage>(extraBufferCapacity = 4)
+    override val debugObstacles: SharedFlow<DebugObstaclesMessage> = _debugObstacles
+
     private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
     override val errors: SharedFlow<String> = _errors
 
@@ -708,7 +711,8 @@ class AndroidBluetoothController(
      * Logs an incoming line to the terminal as usual, updates [robotStatus] if it's a status JSON
      * line, emits a [TargetDetection] (Task 1, checklist C.9) or [Task2Target] (Task 2 arrow) if
      * it's a `TARGET,...` line, and emits a [RobotPositionUpdate] if it's a `ROBOT,...` line
-     * (checklist C.10), or a [PathMessage] if it's a `PATH|...` line. On `START`, emits its timestamp to [task2Started]; on `DONE,TASK2`, emits the run time since the last START received from
+     * (checklist C.10), a [PathMessage] if it's a `PATH|...` line, or a [DebugObstaclesMessage]
+     * for `DEBUG:OBS...`. On `START`, emits its timestamp to [task2Started]; on `DONE,TASK2`, emits the run time since the last START received from
      * the RPi to [task2Done].
      */
     private fun addReceivedLine(line: String) {
@@ -727,6 +731,7 @@ class AndroidBluetoothController(
             null -> if (PathMessage.isPathLine(line)) Log.w(TAG, "Ignoring PATH message with no commands")
             else -> _pathMessages.tryEmit(path)
         }
+        DebugObstaclesMessage.parse(line)?.let { _debugObstacles.tryEmit(it) }
         if (line.trim().equals(RobotCommands.TASK2_START, ignoreCase = true)) {
             task2StartedAt = received.timestamp
             _task2Started.tryEmit(received.timestamp)

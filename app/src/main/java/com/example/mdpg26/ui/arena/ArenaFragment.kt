@@ -16,6 +16,7 @@ import com.example.mdpg26.R
 import com.example.mdpg26.arena.ArenaProtocol
 import com.example.mdpg26.arena.Facing
 import com.example.mdpg26.bluetooth.ConnectionUiState
+import com.example.mdpg26.bluetooth.DebugObstaclesMessage
 import com.example.mdpg26.databinding.DialogTargetFaceBinding
 import com.example.mdpg26.databinding.FragmentArenaBinding
 import com.example.mdpg26.viewmodel.ArenaViewModel
@@ -161,6 +162,20 @@ class ArenaFragment : Fragment() {
                         arenaViewModel.plannedPath, arenaViewModel.pathVisible, arenaViewModel.replayProgress, ::Triple
                     ).collect { (path, visible, progress) ->
                         binding.arenaView.setPlannedPath(path, visible, progress?.elapsedMs)
+                    }
+                }
+                // Test-rig shortcut: lays out the whole arena in one message. Not echoed back as
+                // OBSTACLE messages; "Send arena" forwards the result if needed.
+                launch {
+                    bluetoothViewModel.debugObstacles.collect { message ->
+                        val log = when (message) {
+                            is DebugObstaclesMessage.Valid ->
+                                arenaViewModel.replaceObstacles(message.obstacles)
+                                    ?.let { getString(R.string.debug_obstacles_rejected_fmt, it) }
+                                    ?: getString(R.string.debug_obstacles_placed_fmt, message.obstacles.size)
+                            is DebugObstaclesMessage.Invalid -> getString(R.string.debug_obstacles_rejected_fmt, message.reason)
+                        }
+                        bluetoothViewModel.logLocal(log)
                     }
                 }
                 // Drives a running path replay, one step per display frame. Only while this view

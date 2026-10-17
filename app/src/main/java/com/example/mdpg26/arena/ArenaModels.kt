@@ -17,8 +17,15 @@ enum class Facing(val letter: String, val degrees: Float) {
 
     companion object {
         fun fromLetter(letter: String): Facing? = entries.firstOrNull { it.letter == letter }
+
+        /** N/E/S/W or NORTH/EAST/SOUTH/WEST, as incoming messages may use either. */
+        fun fromLetterOrName(value: String): Facing? =
+            fromLetter(value) ?: entries.firstOrNull { it.name == value }
     }
 }
+
+/** Where to put one obstacle (bottom-left cell, image face), e.g. from a `DEBUG:OBS` message. */
+data class ObstaclePlacement(val x: Int, val y: Int, val imageFace: Facing)
 
 /**
  * A numbered obstacle block: 10cm x 10cm, i.e. a single 10cm grid cell. (x, y) is the

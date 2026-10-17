@@ -5,6 +5,7 @@ import com.example.mdpg26.arena.ArenaState
 import com.example.mdpg26.arena.Facing
 import com.example.mdpg26.arena.OBSTACLE_SIZE_GRIDS
 import com.example.mdpg26.arena.Obstacle
+import com.example.mdpg26.arena.ObstaclePlacement
 import com.example.mdpg26.arena.PathReplay
 import com.example.mdpg26.arena.PathReplayer
 import com.example.mdpg26.arena.PlannedPath
@@ -66,6 +67,24 @@ class ArenaViewModel : ViewModel() {
         val obstacle = Obstacle(id = nextObstacleId++, x = x, y = y, imageFace = imageFace)
         _state.update { it.copy(obstacles = it.obstacles + obstacle) }
         return obstacle
+    }
+
+    /**
+     * Replaces every obstacle with [placements], numbered 1, 2, 3... in order (the `DEBUG:OBS`
+     * test shortcut). All or nothing: returns why the first one that's out of bounds or overlaps
+     * an earlier one can't go there, leaving the arena untouched; null on success.
+     */
+    fun replaceObstacles(placements: List<ObstaclePlacement>): String? {
+        val obstacles = mutableListOf<Obstacle>()
+        placements.forEachIndexed { i, p ->
+            val placed = ArenaState(obstacles = obstacles)
+            if (!placed.footprintInBounds(p.x, p.y, OBSTACLE_SIZE_GRIDS)) return "obstacle ${i + 1} at (${p.x}, ${p.y}) is off the arena"
+            if (placed.overlapsAnyObstacle(p.x, p.y, OBSTACLE_SIZE_GRIDS)) return "obstacle ${i + 1} at (${p.x}, ${p.y}) overlaps another"
+            obstacles += Obstacle(id = i + 1, x = p.x, y = p.y, imageFace = p.imageFace)
+        }
+        nextObstacleId = obstacles.size + 1
+        _state.update { it.copy(obstacles = obstacles) }
+        return null
     }
 
     /** Deletes an obstacle outright (remove tool). Returns the removed obstacle, if it existed. */

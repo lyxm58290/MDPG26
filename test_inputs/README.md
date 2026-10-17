@@ -18,7 +18,20 @@ each photo stop pulse the right obstacle. The motion commands are byte-for-byte 
 
 ## Arena setup (same scenario as `scenario.json`)
 
-Start from an empty arena: open the app fresh, or press **Reset Arena** (it is only enabled
+**Quick way:** send `obstacles_sample.txt` from AMD Tool:
+
+```
+DEBUG:OBS|9,17,S|17,18,S|10,11,S|13,7,E|15,2,W|2,6,N
+```
+
+It replaces every obstacle on the tablet with these six, numbered 1–6 in the order listed, and
+the log shows `Debug: placed 6 obstacles`. Each entry is `x,y,face`, with the face as N/E/S/W
+or a full word. `DEBUG:OBS` on its own clears the obstacles. If any entry is malformed, off the
+arena or overlapping, nothing changes and the log says which entry was wrong. The robot and any
+loaded path stay as they are. Obstacles placed this way are not sent back as `OBSTACLE`
+messages; press **Send arena** to forward them.
+
+**By hand:** start from an empty arena: open the app fresh, or press **Reset Arena** (it is only enabled
 while connected). Leave the robot where Reset puts it: **(0, 0) facing North**, the default.
 
 Place the obstacles **in this order** so the tablet ids come out as listed. (x, y) is the

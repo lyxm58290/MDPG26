@@ -37,6 +37,9 @@ interface BluetoothController {
 
     /** Emits each complete `PATH|...` line received (see [PathMessage]). */
     val pathMessages: SharedFlow<PathMessage>
+
+    /** Emits each `DEBUG:OBS...` line received (see [DebugObstaclesMessage]), malformed ones too. */
+    val debugObstacles: SharedFlow<DebugObstaclesMessage>
     val errors: SharedFlow<String>
 
     fun isBluetoothSupported(): Boolean

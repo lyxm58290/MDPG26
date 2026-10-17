@@ -110,6 +110,9 @@
     <!-- System log line when a PATH message arrives: motion commands, RECOGNISE markers. -->
     <string name="path_loaded_fmt">Path loaded: %1$d commands, %2$d photo stops</string>
     <string name="path_loaded_skipped_fmt">%1$s (%2$d unrecognised lines skipped)</string>
+    <!-- System log lines for the DEBUG:OBS test-rig message. -->
+    <string name="debug_obstacles_placed_fmt">Debug: placed %1$d obstacles (not sent; use Send arena to forward them)</string>
+    <string name="debug_obstacles_rejected_fmt">Debug: DEBUG:OBS ignored, %1$s</string>
     <string name="cd_path_toggle">Show planned path</string>
     <string name="cd_path_play">Play path replay</string>
     <string name="cd_path_stop">Stop path replay</string>

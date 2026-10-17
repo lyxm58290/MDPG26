@@ -1,6 +1,7 @@
 package com.example.mdpg26.bluetooth
 
 import com.example.mdpg26.arena.Facing
+import com.example.mdpg26.arena.ObstaclePlacement
 
 /** UI-facing connection state for the Bluetooth Classic SPP link to the RPi / AMDTool. */
 sealed class ConnectionUiState {
@@ -102,9 +103,7 @@ data class RobotPositionUpdate(val x: Int, val y: Int, val facing: Facing) {
             if (parts.size != 4 || parts[0] != "ROBOT") return null
             val x = parts[1].toIntOrNull() ?: return null
             val y = parts[2].toIntOrNull() ?: return null
-            val facing = Facing.fromLetter(parts[3])
-                ?: Facing.entries.firstOrNull { it.name == parts[3] }
-                ?: return null
+            val facing = Facing.fromLetterOrName(parts[3]) ?: return null
             return RobotPositionUpdate(x, y, facing)
         }
     }
@@ -129,6 +128,44 @@ data class PathMessage(val commands: List<String>) {
             if (!s.startsWith(PREFIX)) return null
             val commands = s.removePrefix(PREFIX).split("|").map { it.trim() }.filter { it.isNotEmpty() }
             return if (commands.isEmpty()) null else PathMessage(commands)
+        }
+    }
+}
+
+/**
+ * Test-rig shortcut for setting up an arena from AMD Tool in one message:
+ * `DEBUG:OBS|<x>,<y>,<face>|<x>,<y>,<face>|...` replaces every obstacle with the listed ones,
+ * numbered 1, 2, 3... in the order given. <x>,<y> is the bottom-left cell; <face> is N/E/S/W
+ * or NORTH/EAST/SOUTH/WEST. The first separator may also be a comma (`DEBUG:OBS,9,17,S`), and
+ * `DEBUG:OBS` on its own clears the arena's obstacles.
+ */
+sealed interface DebugObstaclesMessage {
+    data class Valid(val obstacles: List<ObstaclePlacement>) : DebugObstaclesMessage
+    data class Invalid(val reason: String) : DebugObstaclesMessage
+
+    companion object {
+        const val PREFIX = "DEBUG:OBS"
+
+        /** Null if [line] isn't a DEBUG:OBS message at all; [Invalid] (naming the bad entry) if
+         *  it is but any entry is malformed. Never throws. */
+        fun parse(line: String): DebugObstaclesMessage? {
+            val s = line.trim()
+            if (!s.startsWith(PREFIX, ignoreCase = true)) return null
+            var rest = s.substring(PREFIX.length)
+            if (rest.isNotEmpty() && rest[0] != '|' && rest[0] != ',') return null
+            rest = rest.drop(1)
+            val entries = rest.split("|").map { it.trim() }.filter { it.isNotEmpty() }
+            val obstacles = entries.mapIndexed { i, entry ->
+                val parts = entry.split(",").map { it.trim() }
+                val x = parts.getOrNull(0)?.toIntOrNull()
+                val y = parts.getOrNull(1)?.toIntOrNull()
+                val face = parts.getOrNull(2)?.uppercase()?.let(Facing::fromLetterOrName)
+                if (parts.size != 3 || x == null || y == null || face == null) {
+                    return Invalid("entry ${i + 1} \"$entry\" isn't x,y,face")
+                }
+                ObstaclePlacement(x, y, face)
+            }
+            return Valid(obstacles)
         }
     }
 }
